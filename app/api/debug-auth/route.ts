@@ -12,11 +12,39 @@ export async function GET(request: Request) {
   }
 
   const diagnostics: Record<string, unknown> = {};
+  const resolvedAuthSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  const resolvedGoogleId = process.env.AUTH_GOOGLE_ID ?? process.env.GOOGLE_CLIENT_ID;
+  const resolvedGoogleSecret =
+    process.env.AUTH_GOOGLE_SECRET ?? process.env.GOOGLE_CLIENT_SECRET;
 
   // Check env vars
-  diagnostics.AUTH_SECRET = process.env.AUTH_SECRET ? `set (${process.env.AUTH_SECRET.length} chars)` : "MISSING";
-  diagnostics.AUTH_GOOGLE_ID = process.env.AUTH_GOOGLE_ID ? `set (${process.env.AUTH_GOOGLE_ID.substring(0, 20)}...)` : "MISSING";
-  diagnostics.AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET ? `set (${process.env.AUTH_GOOGLE_SECRET.length} chars)` : "MISSING";
+  diagnostics.AUTH_SECRET = process.env.AUTH_SECRET
+    ? `set (${process.env.AUTH_SECRET.length} chars)`
+    : "MISSING";
+  diagnostics.NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET
+    ? `set (${process.env.NEXTAUTH_SECRET.length} chars)`
+    : "MISSING";
+  diagnostics.RESOLVED_AUTH_SECRET = resolvedAuthSecret
+    ? `set (${resolvedAuthSecret.length} chars)`
+    : "MISSING";
+  diagnostics.AUTH_GOOGLE_ID = process.env.AUTH_GOOGLE_ID
+    ? `set (${process.env.AUTH_GOOGLE_ID.substring(0, 20)}...)`
+    : "MISSING";
+  diagnostics.GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+    ? `set (${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...)`
+    : "MISSING";
+  diagnostics.RESOLVED_GOOGLE_ID = resolvedGoogleId
+    ? `set (${resolvedGoogleId.substring(0, 20)}...)`
+    : "MISSING";
+  diagnostics.AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET
+    ? `set (${process.env.AUTH_GOOGLE_SECRET.length} chars)`
+    : "MISSING";
+  diagnostics.GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
+    ? `set (${process.env.GOOGLE_CLIENT_SECRET.length} chars)`
+    : "MISSING";
+  diagnostics.RESOLVED_GOOGLE_SECRET = resolvedGoogleSecret
+    ? `set (${resolvedGoogleSecret.length} chars)`
+    : "MISSING";
   diagnostics.AUTH_URL = process.env.AUTH_URL || "NOT SET";
   diagnostics.AUTH_TRUST_HOST = process.env.AUTH_TRUST_HOST || "NOT SET";
   diagnostics.NEXTAUTH_URL = process.env.NEXTAUTH_URL || "NOT SET";
