@@ -2,6 +2,27 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Web Speech API types (not included in default TS lib)
+interface SpeechRecognitionType {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: any) => void) | null;
+  onerror: ((event: any) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognitionType;
+    webkitSpeechRecognition: new () => SpeechRecognitionType;
+  }
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 interface UseVoiceInputOptions {
   lang?: string;
   continuous?: boolean;
@@ -12,7 +33,7 @@ export function useVoiceInput(options?: UseVoiceInputOptions) {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSupported, setIsSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionType | null>(null);
 
   useEffect(() => {
     setIsSupported(
@@ -32,7 +53,8 @@ export function useVoiceInput(options?: UseVoiceInputOptions) {
     recognition.continuous = options?.continuous ?? true;
     recognition.interimResults = true;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
       let finalText = "";
       let interimText = "";
 
@@ -50,7 +72,8 @@ export function useVoiceInput(options?: UseVoiceInputOptions) {
       options?.onTranscript?.(text);
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onerror = (event: any) => {
       console.error("Speech recognition error:", event.error);
       setIsListening(false);
     };

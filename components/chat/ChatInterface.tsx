@@ -23,7 +23,6 @@ export function ChatInterface() {
   const {
     messages,
     mode,
-    isStreaming: storeStreaming,
     wordCount,
     sessionStart,
     addMessage,

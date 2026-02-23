@@ -1,41 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { useTRPC } from "@/lib/trpc/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FlashCard } from "@/components/vocabulary/FlashCard";
 import { VocabQuiz } from "@/components/vocabulary/VocabQuiz";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 
 export default function VocabularyPage() {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
 
-  const { data: dueCards } = useQuery(
-    trpc.vocabulary.getDueCards.queryOptions({ limit: 20 })
-  );
-  const { data: stats } = useQuery(trpc.vocabulary.getStats.queryOptions());
-  const { data: searchResults } = useQuery(
-    trpc.vocabulary.search.queryOptions(
-      { query: searchQuery, limit: 20 },
-      { enabled: searchQuery.length >= 2 }
-    )
+  const { data: dueCards } = trpc.vocabulary.getDueCards.useQuery({ limit: 20 });
+  const { data: stats } = trpc.vocabulary.getStats.useQuery();
+  const { data: searchResults } = trpc.vocabulary.search.useQuery(
+    { query: searchQuery, limit: 20 },
+    { enabled: searchQuery.length >= 2 }
   );
 
-  const reviewMutation = useMutation(
-    trpc.vocabulary.review.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["vocabulary"] });
-        setCurrentCardIndex((prev) => prev + 1);
-      },
-    })
-  );
+  const reviewMutation = trpc.vocabulary.review.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vocabulary"] });
+      setCurrentCardIndex((prev) => prev + 1);
+    },
+  });
 
   const currentCard = dueCards?.[currentCardIndex];
 

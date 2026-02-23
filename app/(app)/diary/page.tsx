@@ -4,33 +4,29 @@ import { useState } from "react";
 import { DiaryEditor } from "@/components/diary/DiaryEditor";
 import { CorrectionDiff } from "@/components/diary/CorrectionDiff";
 import { FeedbackPanel } from "@/components/diary/FeedbackPanel";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import type { DiaryFeedback } from "@/types";
 
 export default function DiaryPage() {
-  const trpc = useTRPC();
   const [feedback, setFeedback] = useState<{
     originalText: string;
     feedback: DiaryFeedback;
   } | null>(null);
 
-  const { data: entries } = useQuery(trpc.diary.list.queryOptions());
+  const { data: entries } = trpc.diary.list.useQuery();
 
-  const submitMutation = useMutation(
-    trpc.diary.submit.mutationOptions({
-      onSuccess: (data) => {
-        setFeedback({
-          originalText: data.entry.originalText,
-          feedback: data.feedback,
-        });
-      },
-    })
-  );
+  const submitMutation = trpc.diary.submit.useMutation({
+    onSuccess: (data) => {
+      setFeedback({
+        originalText: data.entry.originalText,
+        feedback: data.feedback,
+      });
+    },
+  });
 
   const handleSubmit = async (text: string, topic?: string) => {
     await submitMutation.mutateAsync({ text, topic });

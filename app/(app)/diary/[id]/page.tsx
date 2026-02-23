@@ -1,8 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client";
 import { CorrectionDiff } from "@/components/diary/CorrectionDiff";
 import { FeedbackPanel } from "@/components/diary/FeedbackPanel";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,11 +12,7 @@ import type { DiaryFeedback } from "@/types";
 
 export default function DiaryEntryPage() {
   const params = useParams<{ id: string }>();
-  const trpc = useTRPC();
-
-  const { data: entry, isLoading } = useQuery(
-    trpc.diary.getById.queryOptions({ id: params.id })
-  );
+  const { data: entry, isLoading } = trpc.diary.getById.useQuery({ id: params.id });
 
   if (isLoading) {
     return (

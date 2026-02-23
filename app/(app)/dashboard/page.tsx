@@ -1,7 +1,6 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client";
 import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
 import { ProgressChart } from "@/components/dashboard/ProgressChart";
 import { LevelGauge } from "@/components/dashboard/LevelGauge";
@@ -9,21 +8,11 @@ import { ErrorTable } from "@/components/dashboard/ErrorTable";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
-  const trpc = useTRPC();
-
-  const { data: streak } = useQuery(trpc.progress.getStreak.queryOptions());
-  const { data: dailyProgress } = useQuery(
-    trpc.progress.getDailyProgress.queryOptions({ days: 90 })
-  );
-  const { data: weeklyStats } = useQuery(
-    trpc.progress.getWeeklyStats.queryOptions()
-  );
-  const { data: errors } = useQuery(
-    trpc.progress.getErrorSummary.queryOptions()
-  );
-  const { data: prediction } = useQuery(
-    trpc.progress.getLevelPrediction.queryOptions()
-  );
+  const { data: streak } = trpc.progress.getStreak.useQuery();
+  const { data: dailyProgress } = trpc.progress.getDailyProgress.useQuery({ days: 90 });
+  const { data: weeklyStats } = trpc.progress.getWeeklyStats.useQuery();
+  const { data: errors } = trpc.progress.getErrorSummary.useQuery();
+  const { data: prediction } = trpc.progress.getLevelPrediction.useQuery();
 
   const calendarDays = (dailyProgress ?? []).map((d) => ({
     date: new Date(d.date).toISOString().split("T")[0],
@@ -64,7 +53,7 @@ export default function DashboardPage() {
             currentLevel={prediction.currentLevel}
             targetLevel={prediction.targetLevel}
             estimatedWeeks={prediction.estimatedWeeks}
-            confidence={prediction.confidence}
+            confidence={prediction.confidence as "high" | "medium" | "low"}
           />
         ) : (
           <Skeleton className="h-64 w-full" />

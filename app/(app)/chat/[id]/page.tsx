@@ -4,24 +4,20 @@ import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { useChatStore } from "@/lib/stores/chat-store";
-import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client";
 import type { ChatMessage } from "@/types";
 
 export default function ChatConversationPage() {
   const params = useParams<{ id: string }>();
-  const trpc = useTRPC();
   const { setConversationId, addMessage, reset } = useChatStore();
 
-  const { data: conversation } = useQuery(
-    trpc.conversation.getById.queryOptions({ id: params.id })
-  );
+  const { data: conversation } = trpc.conversation.getById.useQuery({ id: params.id });
 
   useEffect(() => {
     if (conversation) {
       reset();
       setConversationId(conversation.id);
-      const msgs = conversation.messages as ChatMessage[];
+      const msgs = conversation.messages as unknown as ChatMessage[];
       if (Array.isArray(msgs)) {
         msgs.forEach((m) => addMessage(m));
       }

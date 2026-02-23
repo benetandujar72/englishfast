@@ -1,19 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import { trpc } from "@/lib/trpc/client";
 import { UseOfEnglish } from "@/components/exam/UseOfEnglish";
 import { WritingPrompt } from "@/components/exam/WritingPrompt";
 import { ScoreDisplay } from "@/components/exam/ScoreDisplay";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, RefreshCw, Loader2 } from "lucide-react";
 import Link from "next/link";
 import type { ExamResult } from "@/types";
+import type { ExamType } from "@prisma/client";
 
-const TYPE_MAP: Record<string, { examType: string; part: string; isWriting: boolean }> = {
+const TYPE_MAP: Record<string, { examType: ExamType; part: string; isWriting: boolean }> = {
   "use-of-english-1": { examType: "USE_OF_ENGLISH", part: "Use of English Part 1", isWriting: false },
   "use-of-english-2": { examType: "USE_OF_ENGLISH", part: "Use of English Part 2", isWriting: false },
   "use-of-english-3": { examType: "USE_OF_ENGLISH", part: "Use of English Part 3", isWriting: false },
@@ -24,25 +23,19 @@ const TYPE_MAP: Record<string, { examType: string; part: string; isWriting: bool
 
 export default function ExamTypePage() {
   const params = useParams<{ type: string }>();
-  const router = useRouter();
-  const trpc = useTRPC();
-
   const config = TYPE_MAP[params.type];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [exercise, setExercise] = useState<any>(null);
   const [result, setResult] = useState<ExamResult | null>(null);
   const [startTime] = useState(Date.now());
 
-  const generateMutation = useMutation(
-    trpc.exam.generate.mutationOptions({
-      onSuccess: (data) => setExercise(data),
-    })
-  );
+  const generateMutation = trpc.exam.generate.useMutation({
+    onSuccess: (data) => setExercise(data),
+  });
 
-  const submitMutation = useMutation(
-    trpc.exam.submit.mutationOptions({
-      onSuccess: (data) => setResult(data as ExamResult),
-    })
-  );
+  const submitMutation = trpc.exam.submit.useMutation({
+    onSuccess: (data) => setResult(data as ExamResult),
+  });
 
   if (!config) {
     return (
@@ -59,7 +52,7 @@ export default function ExamTypePage() {
     setExercise(null);
     setResult(null);
     generateMutation.mutate({
-      examType: config.examType as any,
+      examType: config.examType,
       part: config.part,
     });
   };
@@ -67,7 +60,7 @@ export default function ExamTypePage() {
   const handleSubmitAnswers = async (answers: Record<number, string>) => {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
     await submitMutation.mutateAsync({
-      examType: config.examType as any,
+      examType: config.examType,
       part: config.part,
       exercise,
       answers,
@@ -78,7 +71,7 @@ export default function ExamTypePage() {
   const handleSubmitWriting = async (text: string) => {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
     await submitMutation.mutateAsync({
-      examType: config.examType as any,
+      examType: config.examType,
       part: config.part,
       exercise,
       answers: { text },

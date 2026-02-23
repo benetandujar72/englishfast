@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { anthropic } from "@/server/ai/client";
 import { buildDiaryCorrectionPrompt } from "@/server/ai/prompts/diary";
+import type { Prisma } from "@prisma/client";
 import type { DiaryFeedback } from "@/types";
 
 export const diaryRouter = createTRPCRouter({
@@ -69,7 +70,7 @@ export const diaryRouter = createTRPCRouter({
           userId: ctx.userId,
           originalText: input.text,
           correctedText: feedback.correctedText,
-          feedback: feedback as unknown as Record<string, unknown>,
+          feedback: feedback as unknown as Prisma.InputJsonValue,
           wordCount,
           topic: input.topic,
         },
