@@ -5,10 +5,31 @@ import { getToken } from "next-auth/jwt";
 const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({
-    req: request,
-    secret: authSecret,
-  });
+  const isHttps = request.nextUrl.protocol === "https:";
+  const candidateCookieNames = isHttps
+    ? [
+        "__Secure-authjs.session-token",
+        "__Secure-next-auth.session-token",
+        "authjs.session-token",
+        "next-auth.session-token",
+      ]
+    : [
+        "authjs.session-token",
+        "next-auth.session-token",
+        "__Secure-authjs.session-token",
+        "__Secure-next-auth.session-token",
+      ];
+
+  let token = null;
+  for (const cookieName of candidateCookieNames) {
+    token = await getToken({
+      req: request,
+      secret: authSecret,
+      secureCookie: isHttps,
+      cookieName,
+    });
+    if (token) break;
+  }
 
   if (!token) {
     const loginUrl = new URL("/login", request.url);
