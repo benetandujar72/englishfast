@@ -1,0 +1,234 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── NextAuth Required Models ───────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── Core Models ────────────────────────────────────────────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  emailVerified  DateTime?
+  name           String?
+  image          String?
+  nativeLanguage String    @default("es")
+  targetLevel    String    @default("B2")
+  examTarget     String    @default("Cambridge First")
+  currentLevel   String    @default("A2")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  conversations Conversation[]
+  diaryEntries  DiaryEntry[]
+  errorLog      ErrorRecord[]
+  progress      DailyProgress[]
+  vocabulary    VocabularyItem[]
+  examAttempts  ExamAttempt[]
+  streak        Streak?
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionToken String   @unique
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?
+  topic     String?
+  mode      ConvMode @default(CHAT)
+  messages  Json
+  duration  Int?
+  wordCount Int?
+  level     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  errors ErrorRecord[]
+
+  @@map("conversations")
+}
+
+enum ConvMode {
+  CHAT
+  ROLEPLAY
+  DEBATE
+  INTERVIEW
+  STORYTELLING
+}
+
+model DiaryEntry {
+  id            String   @id @default(cuid())
+  userId        String
+  originalText  String
+  correctedText String?
+  feedback      Json?
+  wordCount     Int?
+  topic         String?
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("diary_entries")
+}
+
+model ErrorRecord {
+  id             String    @id @default(cuid())
+  userId         String
+  conversationId String?
+  errorType      ErrorType
+  originalText   String
+  correction     String
+  explanation    String
+  grammarPoint   String?
+  frequency      Int       @default(1)
+  lastSeen       DateTime  @default(now())
+  mastered       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id])
+
+  @@map("error_records")
+}
+
+enum ErrorType {
+  GRAMMAR
+  VOCABULARY
+  SPELLING
+  PREPOSITION
+  ARTICLE
+  TENSE
+  WORD_ORDER
+  COLLOCATION
+  FALSE_FRIEND
+  PRONUNCIATION
+}
+
+model DailyProgress {
+  id                String   @id @default(cuid())
+  userId            String
+  date              DateTime @db.Date
+  minutesPracticed  Int      @default(0)
+  wordsProduced     Int      @default(0)
+  errorsCount       Int      @default(0)
+  correctionsCount  Int      @default(0)
+  conversationCount Int      @default(0)
+  diaryWords        Int      @default(0)
+  examScore         Float?
+  estimatedLevel    String?
+  xpEarned          Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("daily_progress")
+}
+
+model VocabularyItem {
+  id            String   @id @default(cuid())
+  userId        String
+  word          String
+  definition    String
+  exampleSent   String
+  translation   String?
+  category      String?
+  difficulty    Int      @default(3)
+  timesReviewed Int      @default(0)
+  timesCorrect  Int      @default(0)
+  easeFactor    Float    @default(2.5)
+  interval      Int      @default(0)
+  repetitions   Int      @default(0)
+  nextReview    DateTime @default(now())
+  mastered      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, word])
+  @@map("vocabulary_items")
+}
+
+model ExamAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  examType  ExamType
+  part      String
+  content   Json
+  score     Float?
+  feedback  String?
+  timeSpent Int?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("exam_attempts")
+}
+
+enum ExamType {
+  USE_OF_ENGLISH
+  READING
+  WRITING
+  LISTENING_TRANSCRIPT
+  SPEAKING_PROMPT
+}
+
+model Streak {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  currentDays  Int      @default(0)
+  longestDays  Int      @default(0)
+  lastActivity DateTime @default(now())
+  totalDays    Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("streaks")
+}
