@@ -13,6 +13,7 @@ import {
   BookOpen,
   GraduationCap,
   BookText,
+  Mic2,
   Menu,
   LogOut,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/chat", label: "Chat", icon: MessageCircle },
   { href: "/diary", label: "Diary", icon: BookOpen },
   { href: "/exam", label: "Exam", icon: GraduationCap },
+  { href: "/speaking", label: "Speaking", icon: Mic2 },
   { href: "/vocabulary", label: "Vocabulary", icon: BookText },
 ];
 

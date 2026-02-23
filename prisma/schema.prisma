@@ -62,6 +62,8 @@ model User {
   progress      DailyProgress[]
   vocabulary    VocabularyItem[]
   examAttempts  ExamAttempt[]
+  speakingSessions SpeakingSession[]
+  speakingAttempts SpeakingAttempt[]
   streak        Streak?
 
   @@map("users")
@@ -161,7 +163,10 @@ model DailyProgress {
   errorsCount       Int      @default(0)
   correctionsCount  Int      @default(0)
   conversationCount Int      @default(0)
+  speakingSessions  Int      @default(0)
   diaryWords        Int      @default(0)
+  speakingMinutes   Int      @default(0)
+  speakingAvgScore  Float?
   examScore         Float?
   estimatedLevel    String?
   xpEarned          Int      @default(0)
@@ -231,4 +236,69 @@ model Streak {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("streaks")
+}
+
+enum SpeakingMode {
+  PRONUNCIATION
+  SHORT_ANSWER
+  PICTURE_DESCRIPTION
+  GUIDED_CONVERSATION
+}
+
+enum SpeakingStatus {
+  ACTIVE
+  COMPLETED
+}
+
+model SpeakingSession {
+  id           String         @id @default(cuid())
+  userId       String
+  mode         SpeakingMode   @default(SHORT_ANSWER)
+  status       SpeakingStatus @default(ACTIVE)
+  topic        String?
+  targetLevel  String         @default("A2")
+  sourceImageUrl String?
+  durationSec  Int?
+  averageScore Float?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts SpeakingAttempt[]
+
+  @@index([userId, createdAt])
+  @@map("speaking_sessions")
+}
+
+model SpeakingAttempt {
+  id                 String         @id @default(cuid())
+  sessionId          String
+  userId             String
+  attemptIndex       Int            @default(1)
+  mode               SpeakingMode   @default(SHORT_ANSWER)
+  promptText         String
+  userTranscript     String?
+  referenceAnswer    String?
+  strength           String?
+  priorityFix        String?
+  retryPrompt        String?
+  pronunciationScore Float?
+  fluencyScore       Float?
+  grammarScore       Float?
+  lexicalScore       Float?
+  overallScore       Float?
+  estimatedLevel     String?
+  durationSec        Int?
+  audioMimeType      String?
+  audioSizeBytes     Int?
+  imageMimeType      String?
+  feedback           Json?
+  createdAt          DateTime       @default(now())
+
+  session SpeakingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([sessionId, attemptIndex])
+  @@map("speaking_attempts")
 }

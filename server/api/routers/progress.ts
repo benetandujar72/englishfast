@@ -49,15 +49,21 @@ export const progressRouter = createTRPCRouter({
 
     const totalMinutes = days.reduce((sum, d) => sum + d.minutesPracticed, 0);
     const totalWords = days.reduce((sum, d) => sum + d.wordsProduced, 0);
+    const totalSpeakingMinutes = days.reduce((sum, d) => sum + d.speakingMinutes, 0);
+    const totalSpeakingSessions = days.reduce((sum, d) => sum + d.speakingSessions, 0);
 
     return {
       days: days.map((d) => ({
         date: d.date.toISOString().split("T")[0],
         minutesPracticed: d.minutesPracticed,
         wordsProduced: d.wordsProduced,
+        speakingMinutes: d.speakingMinutes,
+        speakingSessions: d.speakingSessions,
       })),
       totalMinutes,
       totalWords,
+      totalSpeakingMinutes,
+      totalSpeakingSessions,
     };
   }),
 
@@ -145,6 +151,8 @@ export const progressRouter = createTRPCRouter({
         minutesPracticed: z.number().optional(),
         wordsProduced: z.number().optional(),
         conversationCount: z.number().optional(),
+        speakingMinutes: z.number().optional(),
+        speakingSessions: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -163,6 +171,12 @@ export const progressRouter = createTRPCRouter({
           conversationCount: input.conversationCount
             ? { increment: input.conversationCount }
             : undefined,
+          speakingMinutes: input.speakingMinutes
+            ? { increment: input.speakingMinutes }
+            : undefined,
+          speakingSessions: input.speakingSessions
+            ? { increment: input.speakingSessions }
+            : undefined,
         },
         create: {
           userId: ctx.userId,
@@ -170,6 +184,8 @@ export const progressRouter = createTRPCRouter({
           minutesPracticed: input.minutesPracticed ?? 0,
           wordsProduced: input.wordsProduced ?? 0,
           conversationCount: input.conversationCount ?? 0,
+          speakingMinutes: input.speakingMinutes ?? 0,
+          speakingSessions: input.speakingSessions ?? 0,
         },
       });
 

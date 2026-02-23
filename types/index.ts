@@ -88,9 +88,13 @@ export interface WeeklyStats {
     date: string;
     minutesPracticed: number;
     wordsProduced: number;
+    speakingMinutes: number;
+    speakingSessions: number;
   }>;
   totalMinutes: number;
   totalWords: number;
+  totalSpeakingMinutes: number;
+  totalSpeakingSessions: number;
 }
 
 export interface LevelPrediction {

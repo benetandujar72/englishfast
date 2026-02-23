@@ -46,6 +46,7 @@ export const config = {
     "/chat/:path*",
     "/diary/:path*",
     "/exam/:path*",
+    "/speaking/:path*",
     "/vocabulary/:path*",
   ],
 };
