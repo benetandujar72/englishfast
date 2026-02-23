@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get("secret");
 
@@ -83,18 +83,18 @@ export async function GET(request: Request) {
       e instanceof Error ? { message: e.message, stack: e.stack?.split("\n").slice(0, 8) } : String(e);
   }
 
-  // Test 5: Manually simulate the signin flow
+  // Test 5: Manually simulate the signin flow using NextRequest
   try {
     const { handlers } = await import("@/auth");
-    const testReq = new Request(
-      `${process.env.AUTH_URL || "https://englishfast-seven.vercel.app"}/api/auth/signin/google`,
+    const baseUrl = process.env.AUTH_URL || "https://englishfast-seven.vercel.app";
+    const testReq: NextRequest = new NextRequest(
+      `${baseUrl}/api/auth/signin/google`,
       { method: "GET", headers: { host: "englishfast-seven.vercel.app" } }
     );
     const response = await handlers.GET(testReq);
     results.signin_simulation = {
       status: response.status,
       location: response.headers.get("location"),
-      headers: Object.fromEntries(response.headers.entries()),
     };
     if (response.status !== 302 || !response.headers.get("location")?.includes("accounts.google.com")) {
       // Try to read the body for error details
