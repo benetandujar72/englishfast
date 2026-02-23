@@ -15,3 +15,13 @@ export const GEMINI_DEFAULT_MODEL =
 
 export const GEMINI_STT_MODEL =
   process.env.GEMINI_STT_MODEL ?? GEMINI_DEFAULT_MODEL;
+
+export const GEMINI_SPEAKING_MODEL =
+  process.env.GEMINI_SPEAKING_MODEL ?? "gemini-2.0-flash";
+
+export const GEMINI_FALLBACK_MODELS = (
+  process.env.GEMINI_FALLBACK_MODELS ?? "gemini-2.0-flash"
+)
+  .split(",")
+  .map((m) => m.trim())
+  .filter(Boolean);

@@ -34,6 +34,14 @@ interface AnalyzeInput {
   imageFile?: File | null;
 }
 
+interface ReevaluateInput {
+  transcript: string;
+  prompt: string;
+  mode: SpeakingMode;
+  targetLevel: string;
+  imageFile?: File | null;
+}
+
 export function useSpeakingSession() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,10 +123,79 @@ export function useSpeakingSession() {
     }
   };
 
+  const reevaluateAndSave = async (
+    sessionId: string,
+    input: ReevaluateInput
+  ): Promise<AnalyzeResponse> => {
+    setIsAnalyzing(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("transcript", input.transcript);
+      formData.append("prompt", input.prompt);
+      formData.append("mode", input.mode);
+      formData.append("targetLevel", input.targetLevel);
+      if (input.imageFile) {
+        formData.append("image", input.imageFile);
+      }
+
+      const response = await fetch("/api/speaking/reevaluate", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        let errorMessage = "";
+        try {
+          const data = (await response.json()) as { error?: string };
+          errorMessage = data.error ?? "";
+        } catch {
+          errorMessage = await response.text();
+        }
+        throw new Error(
+          `Reevaluate request failed (${response.status}): ${errorMessage}`
+        );
+      }
+
+      const result = (await response.json()) as AnalyzeResponse;
+
+      await saveAttemptMutation.mutateAsync({
+        sessionId,
+        mode: input.mode,
+        targetLevel: input.targetLevel,
+        promptText: input.prompt,
+        transcript: result.transcript,
+        referenceAnswer: result.referenceAnswer,
+        strength: result.strength,
+        priorityFix: result.priorityFix,
+        retryPrompt: result.retryPrompt,
+        estimatedLevel: result.estimatedLevel,
+        durationSec: 0,
+        scores: result.scores,
+        feedback: {
+          errorTags: result.errorTags,
+          adaptiveHints: result.adaptiveHints,
+          transcriptionConfidence: result.transcriptionConfidence,
+          reevaluated: true,
+        },
+      });
+
+      return result;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Speaking reevaluation failed.";
+      setError(message);
+      throw err;
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return {
     isAnalyzing,
     error,
     startSession: startSessionMutation.mutateAsync,
     analyzeAndSave,
+    reevaluateAndSave,
   };
 }

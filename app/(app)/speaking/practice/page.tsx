@@ -33,6 +33,7 @@ export default function SpeakingPracticePage() {
   const [feedback, setFeedback] = useState<Awaited<
     ReturnType<ReturnType<typeof useSpeakingSession>["analyzeAndSave"]>
   > | null>(null);
+  const [editableTranscript, setEditableTranscript] = useState("");
 
   const recorder = useAudioRecorder();
   const speaking = useSpeakingSession();
@@ -74,7 +75,22 @@ export default function SpeakingPracticePage() {
       imageFile,
     });
     setFeedback(result);
+    setEditableTranscript(result.transcript);
     recorder.reset();
+    await adaptiveQuery.refetch();
+  };
+
+  const handleReevaluate = async () => {
+    if (!sessionId || !editableTranscript.trim() || !prompt.trim()) return;
+    const result = await speaking.reevaluateAndSave(sessionId, {
+      transcript: editableTranscript.trim(),
+      prompt,
+      mode,
+      targetLevel,
+      imageFile,
+    });
+    setFeedback(result);
+    setEditableTranscript(result.transcript);
     await adaptiveQuery.refetch();
   };
 
@@ -174,16 +190,39 @@ export default function SpeakingPracticePage() {
       </Card>
 
       {feedback && (
-        <SpeakingFeedbackPanel
-          transcript={feedback.transcript}
-          strength={feedback.strength}
-          priorityFix={feedback.priorityFix}
-          retryPrompt={feedback.retryPrompt}
-          estimatedLevel={feedback.estimatedLevel}
-          scores={feedback.scores}
-          referenceAudioBase64={feedback.referenceAudioBase64}
-          referenceAudioMimeType={feedback.referenceAudioMimeType}
-        />
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Edit transcript and reevaluate</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Textarea
+                value={editableTranscript}
+                onChange={(e) => setEditableTranscript(e.target.value)}
+                rows={5}
+                placeholder="Edit transcript before reevaluation..."
+              />
+              <Button
+                onClick={handleReevaluate}
+                disabled={!sessionId || !editableTranscript.trim() || speaking.isAnalyzing}
+                variant="secondary"
+              >
+                {speaking.isAnalyzing ? "Reevaluating..." : "Reevaluate transcript"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <SpeakingFeedbackPanel
+            transcript={feedback.transcript}
+            strength={feedback.strength}
+            priorityFix={feedback.priorityFix}
+            retryPrompt={feedback.retryPrompt}
+            estimatedLevel={feedback.estimatedLevel}
+            scores={feedback.scores}
+            referenceAudioBase64={feedback.referenceAudioBase64}
+            referenceAudioMimeType={feedback.referenceAudioMimeType}
+          />
+        </div>
       )}
 
       {adaptiveQuery.data && (

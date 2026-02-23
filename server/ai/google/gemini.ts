@@ -1,6 +1,10 @@
 import type { SpeakingMode } from "@prisma/client";
 import { buildSpeakingEvaluationPrompt } from "@/server/ai/prompts/speaking";
-import { GEMINI_DEFAULT_MODEL } from "@/server/ai/models";
+import {
+  GEMINI_DEFAULT_MODEL,
+  GEMINI_FALLBACK_MODELS,
+  GEMINI_SPEAKING_MODEL,
+} from "@/server/ai/models";
 
 export interface GeminiInlineDataPart {
   inlineData: {
@@ -41,6 +45,11 @@ export interface SpeakingEvaluationResult {
   adaptiveHints: string[];
 }
 
+export interface SpeakingAnalysisResult extends SpeakingEvaluationResult {
+  transcript: string;
+  transcriptionConfidence: number;
+}
+
 function getGoogleApiKey() {
   const key = process.env.GOOGLE_AI_API_KEY;
   if (!key) {
@@ -79,32 +88,39 @@ async function callGemini({
   responseMimeType?: "application/json" | "text/plain";
 }) {
   const apiKey = getGoogleApiKey();
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        generationConfig: {
-          temperature: 0.3,
-          responseMimeType,
-        },
-        contents: [
-          {
-            role: "user",
-            parts,
-          },
-        ],
-      }),
-    }
-  );
+  const modelsToTry = Array.from(new Set([model, ...GEMINI_FALLBACK_MODELS]));
+  let lastError = "";
 
-  if (!res.ok) {
+  for (const currentModel of modelsToTry) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          generationConfig: {
+            temperature: 0.3,
+            responseMimeType,
+          },
+          contents: [
+            {
+              role: "user",
+              parts,
+            },
+          ],
+        }),
+      }
+    );
+
+    if (res.ok) {
+      return res.json();
+    }
+
     const body = await res.text();
-    throw new Error(`Gemini API error (${res.status}): ${body}`);
+    lastError = `Gemini model ${currentModel} failed (${res.status}): ${body}`;
   }
 
-  return res.json();
+  throw new Error(lastError || "Gemini request failed for all configured models.");
 }
 
 export async function evaluateSpeakingWithGemini(
@@ -136,6 +152,159 @@ ${input.transcript}
 
   const payload = await callGemini({
     model: GEMINI_DEFAULT_MODEL,
+    parts,
+    responseMimeType: "application/json",
+  });
+
+  const raw = extractTextResponse(payload);
+  const parsed = parseJsonObject<Partial<SpeakingEvaluationResult>>(raw);
+
+  return {
+    strength: parsed.strength ?? "Good effort and clear intent.",
+    priorityFix:
+      parsed.priorityFix ?? "Use shorter sentences and focus on verb tense consistency.",
+    retryPrompt:
+      parsed.retryPrompt ??
+      "Try again in 30 seconds: introduce yourself and describe your daily routine.",
+    referenceAnswer:
+      parsed.referenceAnswer ??
+      "Hello, my name is Alex. I work in a small company and I study English every day.",
+    scores: {
+      pronunciation: parsed.scores?.pronunciation ?? 65,
+      fluency: parsed.scores?.fluency ?? 65,
+      grammar: parsed.scores?.grammar ?? 65,
+      lexicalRange: parsed.scores?.lexicalRange ?? 65,
+      overall: parsed.scores?.overall ?? 65,
+    },
+    estimatedLevel: parsed.estimatedLevel ?? input.targetLevel,
+    errorTags: parsed.errorTags ?? [],
+    adaptiveHints: parsed.adaptiveHints ?? [],
+  };
+}
+
+interface GeminiOnePassInput {
+  mode: SpeakingMode;
+  targetLevel: string;
+  prompt: string;
+  audioPart: GeminiInlineDataPart;
+  imagePart?: GeminiInlineDataPart;
+}
+
+export async function analyzeSpeakingOnePassWithGemini(
+  input: GeminiOnePassInput
+): Promise<SpeakingAnalysisResult> {
+  const basePrompt = buildSpeakingEvaluationPrompt({
+    level: input.targetLevel,
+    mode: input.mode,
+  });
+
+  const onePassPrompt = `${basePrompt}
+
+You must do TWO tasks in a single response:
+1) Transcribe the learner audio.
+2) Evaluate speaking quality.
+
+Return ONLY valid JSON with this schema:
+{
+  "transcript": "string",
+  "transcriptionConfidence": number,
+  "strength": "string",
+  "priorityFix": "string",
+  "retryPrompt": "string",
+  "referenceAnswer": "string",
+  "scores": {
+    "pronunciation": number,
+    "fluency": number,
+    "grammar": number,
+    "lexicalRange": number,
+    "overall": number
+  },
+  "estimatedLevel": "A1|A2|B1|B1+|B2",
+  "errorTags": ["string"],
+  "adaptiveHints": ["string"]
+}
+
+Exercise prompt:
+${input.prompt}
+`;
+
+  const parts: GeminiPart[] = [{ text: onePassPrompt }, input.audioPart];
+  if (input.imagePart) {
+    parts.push({ text: "Reference image for context:" });
+    parts.push(input.imagePart);
+  }
+
+  const payload = await callGemini({
+    model: GEMINI_SPEAKING_MODEL,
+    parts,
+    responseMimeType: "application/json",
+  });
+
+  const raw = extractTextResponse(payload);
+  const parsed = parseJsonObject<Partial<SpeakingAnalysisResult>>(raw);
+
+  return {
+    transcript: parsed.transcript ?? "",
+    transcriptionConfidence: parsed.transcriptionConfidence ?? 0.75,
+    strength: parsed.strength ?? "Good effort and clear intent.",
+    priorityFix:
+      parsed.priorityFix ?? "Use shorter sentences and focus on verb tense consistency.",
+    retryPrompt:
+      parsed.retryPrompt ??
+      "Try again in 30 seconds: introduce yourself and describe your daily routine.",
+    referenceAnswer:
+      parsed.referenceAnswer ??
+      "Hello, my name is Alex. I work in a small company and I study English every day.",
+    scores: {
+      pronunciation: parsed.scores?.pronunciation ?? 65,
+      fluency: parsed.scores?.fluency ?? 65,
+      grammar: parsed.scores?.grammar ?? 65,
+      lexicalRange: parsed.scores?.lexicalRange ?? 65,
+      overall: parsed.scores?.overall ?? 65,
+    },
+    estimatedLevel: parsed.estimatedLevel ?? input.targetLevel,
+    errorTags: parsed.errorTags ?? [],
+    adaptiveHints: parsed.adaptiveHints ?? [],
+  };
+}
+
+interface GeminiReevaluateInput {
+  mode: SpeakingMode;
+  targetLevel: string;
+  prompt: string;
+  transcript: string;
+  imagePart?: GeminiInlineDataPart;
+}
+
+export async function reevaluateTranscriptWithGemini(
+  input: GeminiReevaluateInput
+): Promise<SpeakingEvaluationResult> {
+  const basePrompt = buildSpeakingEvaluationPrompt({
+    level: input.targetLevel,
+    mode: input.mode,
+  });
+
+  const parts: GeminiPart[] = [
+    {
+      text: `${basePrompt}
+
+Re-evaluate this learner transcript (edited manually):
+Exercise prompt:
+${input.prompt}
+
+Learner transcript:
+${input.transcript}
+`,
+    },
+  ];
+
+  if (input.imagePart) {
+    parts.push({ text: "Reference image for context:" });
+    parts.push(input.imagePart);
+  }
+
+  const payload = await callGemini({
+    model: GEMINI_SPEAKING_MODEL,
     parts,
     responseMimeType: "application/json",
   });
