@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 p-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md border-white/20 bg-white/85 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-slate-900/70">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 text-5xl">🎓</div>
-          <CardTitle className="text-2xl">English First AI Tutor</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-3xl text-white shadow-lg">
+            🎓
+          </div>
+          <CardTitle className="text-2xl tracking-tight">English First AI Tutor</CardTitle>
+          <p className="text-sm leading-relaxed text-muted-foreground">
             Your personal Cambridge B2 tutor, available 24/7
           </p>
         </CardHeader>
@@ -19,7 +21,7 @@ export default function LoginPage() {
           <Button
             onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
             variant="outline"
-            className="w-full"
+            className="w-full border-slate-200/80 bg-white/70 shadow-sm hover:bg-white dark:border-slate-700 dark:bg-slate-900/50"
             size="lg"
           >
             <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
@@ -43,7 +45,7 @@ export default function LoginPage() {
             Continue with Google
           </Button>
 
-          <div className="text-center text-xs text-muted-foreground">
+          <div className="rounded-lg border border-slate-200/60 bg-white/60 p-3 text-center text-xs text-muted-foreground dark:border-slate-700 dark:bg-slate-900/40">
             <p>Designed for Cambridge First Certificate (B2) preparation</p>
             <p className="mt-1">4-6 hours daily immersive practice</p>
           </div>

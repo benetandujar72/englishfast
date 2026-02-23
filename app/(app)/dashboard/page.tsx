@@ -21,7 +21,12 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto max-w-6xl space-y-6 p-4">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="rounded-2xl border border-white/20 bg-white/75 p-5 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-slate-900/60">
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Track your progress, streak, and personalized learning signals.
+        </p>
+      </div>
 
       {/* Streak Calendar */}
       {streak ? (
