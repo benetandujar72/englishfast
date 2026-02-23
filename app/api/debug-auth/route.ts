@@ -43,8 +43,9 @@ export async function GET(request: Request) {
 
   // Try to import and test auth
   try {
-    const { auth } = await import("@/auth");
+    const authModule = await import("@/auth");
     diagnostics.auth_import = "OK";
+    diagnostics.auth_keys = Object.keys(authModule);
   } catch (e: unknown) {
     diagnostics.auth_import = "FAILED";
     diagnostics.auth_error = e instanceof Error ? e.message : String(e);
