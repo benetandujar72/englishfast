@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { anthropic } from "@/server/ai/client";
+import { CLAUDE_EXAM_MODEL } from "@/server/ai/models";
 import {
   buildExamGenerationPrompt,
   buildExamGradingPrompt,
@@ -27,7 +28,7 @@ export const examRouter = createTRPCRouter({
       });
 
       const response = await anthropic.messages.create({
-        model: "claude-opus-4-20250514",
+        model: CLAUDE_EXAM_MODEL,
         max_tokens: 4096,
         system: buildExamGenerationPrompt(
           input.examType,
@@ -69,7 +70,7 @@ export const examRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const response = await anthropic.messages.create({
-        model: "claude-opus-4-20250514",
+        model: CLAUDE_EXAM_MODEL,
         max_tokens: 2048,
         system: buildExamGradingPrompt(input.examType, input.part),
         messages: [

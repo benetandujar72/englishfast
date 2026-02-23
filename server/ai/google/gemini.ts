@@ -1,5 +1,6 @@
 import type { SpeakingMode } from "@prisma/client";
 import { buildSpeakingEvaluationPrompt } from "@/server/ai/prompts/speaking";
+import { GEMINI_DEFAULT_MODEL } from "@/server/ai/models";
 
 export interface GeminiInlineDataPart {
   inlineData: {
@@ -134,7 +135,7 @@ ${input.transcript}
   }
 
   const payload = await callGemini({
-    model: "gemini-2.0-flash",
+    model: GEMINI_DEFAULT_MODEL,
     parts,
     responseMimeType: "application/json",
   });

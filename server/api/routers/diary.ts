@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { anthropic } from "@/server/ai/client";
+import { CLAUDE_DIARY_MODEL } from "@/server/ai/models";
 import { buildDiaryCorrectionPrompt } from "@/server/ai/prompts/diary";
 import type { Prisma } from "@prisma/client";
 import type { DiaryFeedback } from "@/types";
@@ -45,7 +46,7 @@ export const diaryRouter = createTRPCRouter({
       const wordCount = input.text.trim().split(/\s+/).length;
 
       const response = await anthropic.messages.create({
-        model: "claude-opus-4-20250514",
+        model: CLAUDE_DIARY_MODEL,
         max_tokens: 4096,
         system: buildDiaryCorrectionPrompt(user?.currentLevel ?? "A2"),
         messages: [{ role: "user", content: input.text }],

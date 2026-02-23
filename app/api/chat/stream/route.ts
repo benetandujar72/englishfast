@@ -5,6 +5,7 @@ import { db } from "@/server/db";
 import { Ratelimit } from "@upstash/ratelimit";
 import { redis } from "@/lib/redis";
 import { z } from "zod";
+import { CLAUDE_CHAT_MODEL } from "@/server/ai/models";
 
 const ratelimit = redis
   ? new Ratelimit({
@@ -92,7 +93,7 @@ async function handleStreamRequest(body: unknown) {
 
   // 6. Stream from Claude
   const stream = anthropic.messages.stream({
-    model: "claude-sonnet-4-5-20250514",
+    model: CLAUDE_CHAT_MODEL,
     max_tokens: 1024,
     system: systemPrompt,
     messages: messages.map((m) => ({

@@ -1,5 +1,6 @@
 import { buildAudioTranscriptionPrompt } from "@/server/ai/prompts/speaking";
 import type { GeminiInlineDataPart } from "@/server/ai/google/gemini";
+import { GEMINI_STT_MODEL } from "@/server/ai/models";
 
 interface TranscriptionResult {
   transcript: string;
@@ -39,7 +40,7 @@ export async function transcribeAudioWithGemini(
 ): Promise<TranscriptionResult> {
   const apiKey = getGoogleApiKey();
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_STT_MODEL}:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
