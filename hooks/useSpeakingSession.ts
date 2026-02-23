@@ -68,8 +68,16 @@ export function useSpeakingSession() {
       });
 
       if (!response.ok) {
-        const body = await response.text();
-        throw new Error(`Analyze request failed (${response.status}): ${body}`);
+        let errorMessage = "";
+        try {
+          const data = (await response.json()) as { error?: string };
+          errorMessage = data.error ?? "";
+        } catch {
+          errorMessage = await response.text();
+        }
+        throw new Error(
+          `Analyze request failed (${response.status}): ${errorMessage}`
+        );
       }
 
       const result = (await response.json()) as AnalyzeResponse;

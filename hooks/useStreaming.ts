@@ -35,6 +35,7 @@ export function useStreaming(options?: UseStreamingOptions) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages, mode, grammarFocus, conversationId }),
+          cache: "no-store",
           signal: abortControllerRef.current.signal,
         });
 

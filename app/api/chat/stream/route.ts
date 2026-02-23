@@ -25,11 +25,19 @@ const requestSchema = z.object({
   conversationId: z.string().optional(),
 });
 
-export async function POST(req: Request) {
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+}
+
+async function handleStreamRequest(body: unknown) {
   // 1. Auth check
   const session = await auth();
   if (!session?.user?.id) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response("Unauthorized", { status: 401, headers: corsHeaders() });
   }
 
   // 2. Rate limiting (skip if Redis not configured)
@@ -38,15 +46,21 @@ export async function POST(req: Request) {
     if (!success) {
       return new Response("Rate limit exceeded. Please wait a moment.", {
         status: 429,
+        headers: corsHeaders(),
       });
     }
   }
 
   // 3. Validate input
-  const body = await req.json();
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
-    return new Response(JSON.stringify(parsed.error.flatten()), { status: 400 });
+    return new Response(JSON.stringify(parsed.error.flatten()), {
+      status: 400,
+      headers: {
+        ...corsHeaders(),
+        "Content-Type": "application/json",
+      },
+    });
   }
 
   const { messages, mode, grammarFocus } = parsed.data;
@@ -90,9 +104,61 @@ export async function POST(req: Request) {
   // 7. Return as streaming response
   return new Response(stream.toReadableStream(), {
     headers: {
+      ...corsHeaders(),
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
     },
+  });
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    return await handleStreamRequest(body);
+  } catch (error) {
+    console.error("[CHAT STREAM POST ERROR]", error);
+    return new Response("Invalid request body.", {
+      status: 400,
+      headers: corsHeaders(),
+    });
+  }
+}
+
+export async function GET(req: Request) {
+  // Compatibility fallback for clients that call GET (e.g. cached old bundles).
+  try {
+    const { searchParams } = new URL(req.url);
+    const payloadRaw = searchParams.get("payload");
+    if (!payloadRaw) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Missing payload. Use POST /api/chat/stream or provide ?payload=<urlencoded-json>.",
+        }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders(),
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+    const payload = JSON.parse(payloadRaw);
+    return await handleStreamRequest(payload);
+  } catch (error) {
+    console.error("[CHAT STREAM GET ERROR]", error);
+    return new Response("Invalid payload.", {
+      status: 400,
+      headers: corsHeaders(),
+    });
+  }
+}
+
+export function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders(),
   });
 }
