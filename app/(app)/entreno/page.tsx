@@ -11,6 +11,7 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useReadingTrainer, type ReadingAnalyzeResult } from "@/hooks/useReadingTrainer";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import {
+  type ReadingLength,
   type ReadingLevel,
   pickRandomReadingFragment,
 } from "@/lib/reading-training";
@@ -29,8 +30,11 @@ function ScoreRow({ label, value }: { label: string; value: number }) {
 
 export default function EntrenoPage() {
   const [level, setLevel] = useState<ReadingLevel>("A1");
+  const [duration, setDuration] = useState<ReadingLength>("medium");
   const [subtitleLanguage, setSubtitleLanguage] = useState("es");
-  const [fragment, setFragment] = useState(() => pickRandomReadingFragment("A1"));
+  const [fragment, setFragment] = useState(() =>
+    pickRandomReadingFragment("A1", "medium")
+  );
   const [result, setResult] = useState<ReadingAnalyzeResult | null>(null);
   const [showSpanishText, setShowSpanishText] = useState(true);
   const [liveSubtitle, setLiveSubtitle] = useState("");
@@ -74,7 +78,7 @@ export default function EntrenoPage() {
   const activeSentence = sentences[activeSentenceIndex] ?? "";
 
   const nextFragment = () => {
-    setFragment(pickRandomReadingFragment(level));
+    setFragment(pickRandomReadingFragment(level, duration));
     setResult(null);
     setLiveSubtitle("");
     setLiveTranslateError(null);
@@ -190,6 +194,19 @@ export default function EntrenoPage() {
             </select>
           </label>
 
+          <label className="space-y-1 text-sm">
+            <span>Duracion de lectura</span>
+            <select
+              value={duration}
+              onChange={(e) => setDuration(e.target.value as ReadingLength)}
+              className="w-full rounded-md border bg-background px-3 py-2"
+            >
+              <option value="short">Corta</option>
+              <option value="medium">Media</option>
+              <option value="long">Larga</option>
+            </select>
+          </label>
+
           <div className="flex items-end">
             <Button onClick={nextFragment} variant="secondary" className="w-full">
               Nuevo fragmento
@@ -205,6 +222,7 @@ export default function EntrenoPage() {
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">Level {fragment.level}</Badge>
+            <Badge variant="outline">Duration {fragment.duration}</Badge>
             <Badge variant="outline">{fragment.topic}</Badge>
           </div>
           <div className="space-y-2 rounded-md border p-3">
