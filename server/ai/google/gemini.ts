@@ -67,6 +67,10 @@ export interface ReadingAloudAnalysisResult {
   };
 }
 
+export interface TranslationResult {
+  translatedText: string;
+}
+
 function getGoogleApiKey() {
   const key = process.env.GOOGLE_AI_API_KEY;
   if (!key) {
@@ -435,5 +439,38 @@ Return ONLY valid JSON with this schema:
       clarity: parsed.scores?.clarity ?? 65,
       overall: parsed.scores?.overall ?? 65,
     },
+  };
+}
+
+interface TranslateInput {
+  text: string;
+  targetLanguage: string;
+}
+
+export async function translateTextWithGemini(
+  input: TranslateInput
+): Promise<TranslationResult> {
+  const prompt = `
+Translate this text to the target language code "${input.targetLanguage}".
+Keep meaning and tone natural.
+Return ONLY valid JSON:
+{
+  "translatedText": "string"
+}
+
+Text:
+${input.text}
+`;
+
+  const payload = await callGemini({
+    model: GEMINI_SPEAKING_MODEL,
+    parts: [{ text: prompt }],
+    responseMimeType: "application/json",
+  });
+
+  const raw = extractTextResponse(payload);
+  const parsed = parseJsonObject<Partial<TranslationResult>>(raw);
+  return {
+    translatedText: parsed.translatedText ?? input.text,
   };
 }

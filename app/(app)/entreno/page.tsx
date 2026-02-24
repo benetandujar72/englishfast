@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { AudioRecorder } from "@/components/speaking/AudioRecorder";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useReadingTrainer, type ReadingAnalyzeResult } from "@/hooks/useReadingTrainer";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
 import {
   type ReadingLevel,
   pickRandomReadingFragment,
@@ -32,20 +33,109 @@ export default function EntrenoPage() {
   const [fragment, setFragment] = useState(() => pickRandomReadingFragment("A1"));
   const [result, setResult] = useState<ReadingAnalyzeResult | null>(null);
   const [showSpanishText, setShowSpanishText] = useState(true);
+  const [liveSubtitle, setLiveSubtitle] = useState("");
+  const [liveTranslateError, setLiveTranslateError] = useState<string | null>(null);
+  const [isTranslatingLive, setIsTranslatingLive] = useState(false);
+  const [translationCache, setTranslationCache] = useState<Record<string, string>>({});
 
   const recorder = useAudioRecorder();
   const trainer = useReadingTrainer();
+  const liveVoice = useVoiceInput({
+    lang: "en-US",
+    continuous: true,
+  });
 
   const canAnalyze = useMemo(
     () => Boolean(recorder.audioBlob && fragment.textEn.trim()),
     [recorder.audioBlob, fragment.textEn]
   );
 
+  const sentences = useMemo(
+    () =>
+      fragment.textEn
+        .split(/(?<=[.!?])\s+/)
+        .map((s) => s.trim())
+        .filter(Boolean),
+    [fragment.textEn]
+  );
+
+  const activeSentenceIndex = useMemo(() => {
+    const spokenWords = liveVoice.transcript.trim().split(/\s+/).filter(Boolean).length;
+    if (spokenWords === 0 || sentences.length === 0) return 0;
+
+    let cumulative = 0;
+    for (let i = 0; i < sentences.length; i++) {
+      cumulative += sentences[i].split(/\s+/).filter(Boolean).length;
+      if (spokenWords <= cumulative) return i;
+    }
+    return sentences.length - 1;
+  }, [liveVoice.transcript, sentences]);
+
+  const activeSentence = sentences[activeSentenceIndex] ?? "";
+
   const nextFragment = () => {
     setFragment(pickRandomReadingFragment(level));
     setResult(null);
+    setLiveSubtitle("");
+    setLiveTranslateError(null);
+    setTranslationCache({});
+    liveVoice.resetTranscript();
+    if (liveVoice.isListening) liveVoice.stopListening();
     recorder.reset();
   };
+
+  useEffect(() => {
+    if (!activeSentence) return;
+    const cached = translationCache[activeSentence];
+    if (cached) {
+      setLiveSubtitle(cached);
+      return;
+    }
+
+    let cancelled = false;
+    setIsTranslatingLive(true);
+    setLiveTranslateError(null);
+
+    const run = async () => {
+      try {
+        const response = await fetch("/api/reading/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: activeSentence,
+            targetLanguage: subtitleLanguage,
+          }),
+        });
+
+        if (!response.ok) {
+          const raw = await response.text();
+          throw new Error(raw || `Translate failed (${response.status})`);
+        }
+
+        const data = (await response.json()) as { translatedText?: string };
+        const translated = data.translatedText ?? activeSentence;
+        if (!cancelled) {
+          setLiveSubtitle(translated);
+          setTranslationCache((prev) => ({ ...prev, [activeSentence]: translated }));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setLiveTranslateError(
+            error instanceof Error ? error.message : "Live translation error."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsTranslatingLive(false);
+        }
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSentence, subtitleLanguage, translationCache]);
 
   const handleAnalyze = async () => {
     if (!recorder.audioBlob) return;
@@ -117,7 +207,20 @@ export default function EntrenoPage() {
             <Badge variant="outline">Level {fragment.level}</Badge>
             <Badge variant="outline">{fragment.topic}</Badge>
           </div>
-          <Textarea value={fragment.textEn} readOnly rows={4} />
+          <div className="space-y-2 rounded-md border p-3">
+            {sentences.map((sentence, idx) => (
+              <p
+                key={`${fragment.id}-${idx}`}
+                className={
+                  idx === activeSentenceIndex
+                    ? "rounded-md bg-sky-500/10 px-2 py-1 text-sm font-medium text-sky-900 dark:text-sky-200"
+                    : "px-2 py-1 text-sm text-muted-foreground"
+                }
+              >
+                {sentence}
+              </p>
+            ))}
+          </div>
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
               Paso 1: lee en ingles. Paso 2: puedes apoyar con version en castellano.
@@ -135,6 +238,60 @@ export default function EntrenoPage() {
               {fragment.textEs}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Asistente en vivo</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={liveVoice.startListening}
+              disabled={!liveVoice.isSupported || liveVoice.isListening}
+              variant="secondary"
+            >
+              Iniciar transcripcion en vivo
+            </Button>
+            <Button
+              onClick={liveVoice.stopListening}
+              disabled={!liveVoice.isListening}
+              variant="outline"
+            >
+              Detener
+            </Button>
+            <Badge variant={liveVoice.isListening ? "default" : "secondary"}>
+              {liveVoice.isListening ? "Escuchando" : "En pausa"}
+            </Badge>
+          </div>
+
+          {!liveVoice.isSupported && (
+            <p className="text-sm text-destructive">
+              Tu navegador no soporta transcripcion en vivo (Web Speech API).
+            </p>
+          )}
+
+          <div className="rounded-md border p-3 text-sm">
+            <p className="font-medium">Transcripcion en vivo (EN)</p>
+            <p className="mt-1 text-muted-foreground">
+              {liveVoice.transcript || "Empieza a leer para ver la transcripcion."}
+            </p>
+          </div>
+
+          <div className="rounded-md border p-3 text-sm">
+            <p className="font-medium">
+              Subtitulo en vivo ({subtitleLanguage}) - frase actual
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              {isTranslatingLive
+                ? "Traduciendo..."
+                : liveSubtitle || "Subtitulo en espera de voz."}
+            </p>
+            {liveTranslateError && (
+              <p className="mt-2 text-xs text-destructive">{liveTranslateError}</p>
+            )}
+          </div>
         </CardContent>
       </Card>
 
