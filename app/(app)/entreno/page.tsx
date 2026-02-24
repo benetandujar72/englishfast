@@ -346,7 +346,10 @@ export default function EntrenoPage() {
         <CardContent className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <Button
-              onClick={liveVoice.startListening}
+              onClick={() => {
+                liveVoice.clearError();
+                liveVoice.startListening();
+              }}
               disabled={!liveVoice.isSupported || liveVoice.isListening}
               variant="secondary"
             >
@@ -368,6 +371,9 @@ export default function EntrenoPage() {
             <p className="text-sm text-destructive">
               Tu navegador no soporta transcripcion en vivo (Web Speech API).
             </p>
+          )}
+          {liveVoice.error && (
+            <p className="text-sm text-destructive">{liveVoice.error}</p>
           )}
 
           <div className="rounded-md border p-3 text-sm">

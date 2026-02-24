@@ -33,7 +33,9 @@ export function useVoiceInput(options?: UseVoiceInputOptions) {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSupported, setIsSupported] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
+  const manualStopRef = useRef(false);
 
   useEffect(() => {
     setIsSupported(
@@ -44,6 +46,10 @@ export function useVoiceInput(options?: UseVoiceInputOptions) {
 
   const startListening = useCallback(() => {
     if (!isSupported) return;
+    if (isListening) return;
+
+    setError(null);
+    manualStopRef.current = false;
 
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -75,22 +81,40 @@ export function useVoiceInput(options?: UseVoiceInputOptions) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onerror = (event: any) => {
       // "aborted" is expected when stopping recognition manually.
-      if (event?.error !== "aborted") {
+      if (event?.error !== "aborted" && event?.error !== "no-speech") {
         console.error("Speech recognition error:", event.error);
+        if (event?.error === "not-allowed" || event?.error === "service-not-allowed") {
+          setError("Permiso de microfono denegado. Revisa permisos del navegador.");
+        } else if (event?.error === "network") {
+          setError("Error de red en reconocimiento de voz. Intenta de nuevo.");
+        } else {
+          setError(`Error de reconocimiento: ${event?.error ?? "desconocido"}`);
+        }
       }
       setIsListening(false);
     };
 
     recognition.onend = () => {
       setIsListening(false);
+      recognitionRef.current = null;
     };
 
-    recognition.start();
-    recognitionRef.current = recognition;
-    setIsListening(true);
-  }, [isSupported, options]);
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsListening(true);
+    } catch (err) {
+      setIsListening(false);
+      setError(
+        err instanceof Error
+          ? `No se pudo iniciar la transcripcion: ${err.message}`
+          : "No se pudo iniciar la transcripcion."
+      );
+    }
+  }, [isSupported, isListening, options]);
 
   const stopListening = useCallback(() => {
+    manualStopRef.current = true;
     recognitionRef.current?.stop();
     setIsListening(false);
   }, []);
@@ -99,13 +123,19 @@ export function useVoiceInput(options?: UseVoiceInputOptions) {
     setTranscript("");
   }, []);
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   return {
     isListening,
     transcript,
     isSupported,
+    error,
     startListening,
     stopListening,
     resetTranscript,
+    clearError,
     setTranscript,
   };
 }
