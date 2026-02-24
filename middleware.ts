@@ -47,6 +47,7 @@ export const config = {
     "/diary/:path*",
     "/exam/:path*",
     "/speaking/:path*",
+    "/entreno/:path*",
     "/vocabulary/:path*",
   ],
 };

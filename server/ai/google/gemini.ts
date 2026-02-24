@@ -50,6 +50,23 @@ export interface SpeakingAnalysisResult extends SpeakingEvaluationResult {
   transcriptionConfidence: number;
 }
 
+export interface ReadingAloudAnalysisResult {
+  transcript: string;
+  transcriptionConfidence: number;
+  feedbackEnglish: string;
+  feedbackSubtitle: string;
+  pronunciationTipsEnglish: string[];
+  pronunciationTipsSubtitle: string[];
+  suggestedReadingEnglish: string;
+  suggestedReadingSubtitle: string;
+  scores: {
+    pronunciation: number;
+    fluency: number;
+    clarity: number;
+    overall: number;
+  };
+}
+
 function getGoogleApiKey() {
   const key = process.env.GOOGLE_AI_API_KEY;
   if (!key) {
@@ -332,5 +349,91 @@ ${input.transcript}
     estimatedLevel: parsed.estimatedLevel ?? input.targetLevel,
     errorTags: parsed.errorTags ?? [],
     adaptiveHints: parsed.adaptiveHints ?? [],
+  };
+}
+
+interface ReadingAloudInput {
+  prompt: string;
+  targetLevel: string;
+  subtitleLanguage: string;
+  audioPart: GeminiInlineDataPart;
+}
+
+export async function analyzeReadingAloudWithGemini(
+  input: ReadingAloudInput
+): Promise<ReadingAloudAnalysisResult> {
+  const prompt = `
+You are an English reading-aloud coach for language learners.
+Target level: ${input.targetLevel}
+Subtitle language code: ${input.subtitleLanguage}
+
+Task:
+1) Transcribe learner audio.
+2) Evaluate oral reading quality (pronunciation, fluency, clarity).
+3) Give concise feedback in English.
+4) Provide subtitle translation of the same feedback in the requested subtitle language.
+5) Provide pronunciation tips in English and translated subtitle language.
+6) Suggest one corrected/smoother version to read next in English and subtitle language.
+
+Reference text the learner should read:
+${input.prompt}
+
+Return ONLY valid JSON with this schema:
+{
+  "transcript": "string",
+  "transcriptionConfidence": number,
+  "feedbackEnglish": "string",
+  "feedbackSubtitle": "string",
+  "pronunciationTipsEnglish": ["string"],
+  "pronunciationTipsSubtitle": ["string"],
+  "suggestedReadingEnglish": "string",
+  "suggestedReadingSubtitle": "string",
+  "scores": {
+    "pronunciation": number,
+    "fluency": number,
+    "clarity": number,
+    "overall": number
+  }
+}
+`;
+
+  const payload = await callGemini({
+    model: GEMINI_SPEAKING_MODEL,
+    parts: [{ text: prompt }, input.audioPart],
+    responseMimeType: "application/json",
+  });
+
+  const raw = extractTextResponse(payload);
+  const parsed = parseJsonObject<Partial<ReadingAloudAnalysisResult>>(raw);
+
+  return {
+    transcript: parsed.transcript ?? "",
+    transcriptionConfidence: parsed.transcriptionConfidence ?? 0.75,
+    feedbackEnglish:
+      parsed.feedbackEnglish ??
+      "Good effort. Keep a steady pace and stress key words more clearly.",
+    feedbackSubtitle:
+      parsed.feedbackSubtitle ??
+      "Buen esfuerzo. Mantén un ritmo constante y enfatiza con más claridad las palabras clave.",
+    pronunciationTipsEnglish: parsed.pronunciationTipsEnglish ?? [
+      "Open vowels clearly and avoid dropping final consonants.",
+      "Pause briefly at commas for natural rhythm.",
+    ],
+    pronunciationTipsSubtitle: parsed.pronunciationTipsSubtitle ?? [
+      "Abre bien las vocales y evita omitir consonantes finales.",
+      "Haz pausas breves en las comas para un ritmo natural.",
+    ],
+    suggestedReadingEnglish:
+      parsed.suggestedReadingEnglish ??
+      input.prompt,
+    suggestedReadingSubtitle:
+      parsed.suggestedReadingSubtitle ??
+      "Lectura sugerida no disponible.",
+    scores: {
+      pronunciation: parsed.scores?.pronunciation ?? 65,
+      fluency: parsed.scores?.fluency ?? 65,
+      clarity: parsed.scores?.clarity ?? 65,
+      overall: parsed.scores?.overall ?? 65,
+    },
   };
 }

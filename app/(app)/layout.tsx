@@ -14,6 +14,7 @@ import {
   GraduationCap,
   BookText,
   Mic2,
+  Languages,
   Menu,
   LogOut,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { href: "/diary", label: "Diary", icon: BookOpen },
   { href: "/exam", label: "Exam", icon: GraduationCap },
   { href: "/speaking", label: "Speaking", icon: Mic2 },
+  { href: "/entreno", label: "Entreno", icon: Languages },
   { href: "/vocabulary", label: "Vocabulary", icon: BookText },
 ];
 
