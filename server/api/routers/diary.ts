@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { anthropic } from "@/server/ai/client";
 import { CLAUDE_DIARY_MODEL } from "@/server/ai/models";
 import { buildDiaryCorrectionPrompt } from "@/server/ai/prompts/diary";
+import { completePendingTaskForModule } from "@/server/api/learning-task-tracker";
 import type { Prisma } from "@prisma/client";
 import type { DiaryFeedback } from "@/types";
 
@@ -114,6 +115,11 @@ export const diaryRouter = createTRPCRouter({
           diaryWords: wordCount,
           errorsCount: feedback.errors?.length ?? 0,
         },
+      });
+
+      await completePendingTaskForModule(ctx.db, ctx.userId, "DIARY", {
+        completedMinutes: Math.max(10, Math.ceil(wordCount / 20)),
+        earnedXp: Math.max(20, Math.ceil(wordCount / 8)),
       });
 
       return { entry, feedback };

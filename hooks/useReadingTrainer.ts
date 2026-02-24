@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ReadingLevel } from "@/lib/reading-training";
+import type { CompetencyFocus, ReadingLevel } from "@/lib/reading-training";
 
 export interface ReadingAnalyzeResult {
   transcript: string;
@@ -28,6 +28,7 @@ interface AnalyzeInput {
   prompt: string;
   targetLevel: ReadingLevel;
   subtitleLanguage: string;
+  competencyFocus?: CompetencyFocus;
 }
 
 export function useReadingTrainer() {
@@ -43,6 +44,9 @@ export function useReadingTrainer() {
       formData.append("prompt", input.prompt);
       formData.append("targetLevel", input.targetLevel);
       formData.append("subtitleLanguage", input.subtitleLanguage);
+      if (input.competencyFocus) {
+        formData.append("competencyFocus", input.competencyFocus);
+      }
 
       const response = await fetch("/api/reading/analyze", {
         method: "POST",

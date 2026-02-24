@@ -60,7 +60,7 @@ export function ExamSelector() {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {EXAM_PARTS.map((part) => (
         <Link key={part.type} href={`/exam/${part.type}`}>
-          <Card className="cursor-pointer transition-shadow hover:shadow-md">
+          <Card variant="soft" className="cursor-pointer transition-shadow hover:shadow-md">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <span className="text-2xl">{part.icon}</span>

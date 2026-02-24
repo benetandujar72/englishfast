@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { UseOfEnglish } from "@/components/exam/UseOfEnglish";
 import { WritingPrompt } from "@/components/exam/WritingPrompt";
 import { ScoreDisplay } from "@/components/exam/ScoreDisplay";
+import { SessionFlowHeader } from "@/components/learning/SessionFlowHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCw, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -81,6 +82,14 @@ export default function ExamTypePage() {
 
   return (
     <div className="container mx-auto max-w-4xl space-y-6 p-4">
+      <SessionFlowHeader
+        title={config.part}
+        subtitle="Generate, solve, submit, and review corrections in one focused flow."
+        goalMinutes={20}
+        doneMinutes={result ? 20 : exercise ? 10 : 0}
+        status={result ? "completed" : generateMutation.isPending || submitMutation.isPending ? "active" : "ready"}
+      />
+
       <div className="flex items-center justify-between">
         <Link href="/exam">
           <Button variant="ghost" size="sm">

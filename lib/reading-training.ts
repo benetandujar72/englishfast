@@ -1,5 +1,22 @@
-export type ReadingLevel = "A1" | "A2" | "B1";
+export type ReadingLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export type ReadingLength = "short" | "medium" | "long";
+export type CompetencyFocus =
+  | "comprension"
+  | "interaccion"
+  | "produccion"
+  | "escritura";
+export type TopicFilter =
+  | "general"
+  | "personal"
+  | "compras"
+  | "trabajo"
+  | "viajes"
+  | "salud"
+  | "tecnologia"
+  | "sociedad"
+  | "academico"
+  | "profesional"
+  | "cultura";
 
 export interface ReadingFragment {
   id: string;
@@ -8,7 +25,94 @@ export interface ReadingFragment {
   topic: string;
   textEn: string;
   textEs: string;
+  topicTags?: TopicFilter[];
+  competencyTags?: CompetencyFocus[];
 }
+
+export const TOPIC_FILTER_OPTIONS: Array<{ value: TopicFilter; label: string }> = [
+  { value: "general", label: "General" },
+  { value: "personal", label: "Personal" },
+  { value: "compras", label: "Compras" },
+  { value: "trabajo", label: "Trabajo" },
+  { value: "viajes", label: "Viajes" },
+  { value: "salud", label: "Salud" },
+  { value: "tecnologia", label: "Tecnologia" },
+  { value: "sociedad", label: "Sociedad" },
+  { value: "academico", label: "Academico" },
+  { value: "profesional", label: "Profesional" },
+  { value: "cultura", label: "Cultura" },
+];
+
+export const COMPETENCY_FILTER_OPTIONS: Array<{
+  value: CompetencyFocus;
+  label: string;
+}> = [
+  { value: "comprension", label: "Comprension oral + lectura" },
+  { value: "interaccion", label: "Hablar: interaccion" },
+  { value: "produccion", label: "Hablar: produccion" },
+  { value: "escritura", label: "Escribir" },
+];
+
+export const CEFR_COMPETENCIES: Record<
+  Exclude<ReadingLevel, "A1">,
+  {
+    comprension: string;
+    interaccion: string;
+    produccion: string;
+    escritura: string;
+  }
+> = {
+  A2: {
+    comprension:
+      "Comprendes frases frecuentes sobre temas cercanos y lees textos breves localizando informacion predecible.",
+    interaccion:
+      "Te comunicas en tareas rutinarias con intercambio directo de informacion, aunque en intercambios breves.",
+    produccion:
+      "Describes con terminos sencillos familia, condiciones de vida, formacion y trabajo.",
+    escritura:
+      "Escribes notas y mensajes breves sobre necesidades inmediatas y cartas personales muy sencillas.",
+  },
+  B1: {
+    comprension:
+      "Captas ideas principales de discursos claros y comprendes textos de uso habitual, incluidos de trabajo.",
+    interaccion:
+      "Te desenvuelves en situaciones de viaje y participas espontaneamente en conversaciones cotidianas.",
+    produccion:
+      "Enlazas frases para narrar experiencias, planes e historias y justificas brevemente opiniones.",
+    escritura:
+      "Redactas textos sencillos y cohesionados sobre temas conocidos y cartas de experiencias.",
+  },
+  B2: {
+    comprension:
+      "Entiendes discursos extensos sobre temas conocidos y lees articulos e informes con puntos de vista.",
+    interaccion:
+      "Interactuas con fluidez y espontaneidad para conversar con nativos y defender posturas.",
+    produccion:
+      "Produces descripciones claras y detalladas y explicas ventajas e inconvenientes de opciones.",
+    escritura:
+      "Escribes textos claros y detallados aportando razones a favor o en contra.",
+  },
+  C1: {
+    comprension:
+      "Comprendes discursos extensos y textos largos complejos apreciando matices de estilo.",
+    interaccion:
+      "Te expresas con fluidez y flexibilidad para fines sociales y profesionales.",
+    produccion:
+      "Presentas descripciones detalladas de temas complejos y cierras con conclusiones adecuadas.",
+    escritura:
+      "Redactas textos claros, bien estructurados y ajustados al destinatario destacando lo importante.",
+  },
+  C2: {
+    comprension:
+      "Entiendes practicamente cualquier lengua hablada y lees con facilidad textos complejos y abstractos.",
+    interaccion:
+      "Participas sin esfuerzo en conversaciones y debates, con matices finos y precision.",
+    produccion:
+      "Expones argumentos y descripciones de forma clara, fluida y con estructura logica eficaz.",
+    escritura:
+      "Escribes textos complejos con estructura logica y elaboras resumenes y resenas profesionales.",
+  },
+};
 
 export const READING_FRAGMENTS: ReadingFragment[] = [
   {
@@ -341,15 +445,100 @@ export const READING_FRAGMENTS: ReadingFragment[] = [
     textEs:
       "Hace un ano me marque el objetivo de alcanzar confianza oral de nivel B1 para trabajo y viajes. Al principio me costaba la pronunciacion y solia traducir palabra por palabra en mi cabeza. En lugar de abandonar, construi un sistema realista: micro-practica diaria, repaso semanal y auto-grabaciones mensuales. Registre mis errores y los agrupe por patrones, sobre todo tiempos verbales y ritmo de frase. Con el tiempo note que mi mayor mejora vino de leer en voz alta y recibir feedback claro, no de memorizar listas largas de vocabulario. Ahora puedo mantener conversaciones con menos estres y expresar opiniones con mas estructura. Aun me queda mucho por aprender, pero mi proceso es sostenible y basado en evidencia. La leccion mas valiosa es simple: la constancia supera a la intensidad al aprender un idioma.",
   },
+  {
+    id: "b2-policy-1",
+    level: "B2",
+    duration: "medium",
+    topic: "Article: Remote work policy debate",
+    textEn:
+      "Many companies are redesigning their remote work policies after noticing both gains and losses in productivity. Supporters of hybrid models argue that flexibility improves wellbeing and reduces commuting stress, which can increase focus on complex tasks. Critics, however, point out that collaboration and onboarding become harder when teams rarely meet in person. In one recent internal survey, managers reported better individual output but weaker cross-team alignment. A possible compromise is to schedule fixed in-office collaboration days while preserving flexible deep-work days at home. This approach requires clear communication standards and measurable goals.",
+    textEs:
+      "Muchas empresas estan redisenando sus politicas de trabajo remoto tras observar ganancias y perdidas de productividad. Quienes apoyan modelos hibridos sostienen que la flexibilidad mejora el bienestar y reduce el estres de desplazamiento, lo que puede aumentar la concentracion en tareas complejas. Sin embargo, las criticas indican que la colaboracion y la incorporacion de nuevos empleados se vuelven mas dificiles cuando los equipos casi no coinciden en persona. En una encuesta interna reciente, los responsables reportaron mejor rendimiento individual pero peor alineacion entre equipos. Un posible compromiso es fijar dias de colaboracion presencial y mantener dias flexibles para trabajo profundo en casa. Este enfoque exige estandares de comunicacion claros y objetivos medibles.",
+    topicTags: ["trabajo", "profesional"],
+    competencyTags: ["comprension", "interaccion", "produccion", "escritura"],
+  },
+  {
+    id: "b2-education-1",
+    level: "B2",
+    duration: "long",
+    topic: "Report: Digital education and equity",
+    textEn:
+      "Digital education expanded rapidly in recent years, but access quality remains uneven across regions and income groups. While devices are now more available, reliable connectivity and quiet study spaces are still major barriers for many learners. Educators also report that students with weaker self-regulation skills struggle more in asynchronous environments. On the positive side, data-informed tutoring systems can personalize content and offer timely feedback when used responsibly. The main challenge is not choosing between traditional and digital methods, but designing blended models that preserve human guidance while leveraging adaptive technologies. Policymakers therefore need to combine infrastructure investment, teacher training, and evidence-based evaluation frameworks.",
+    textEs:
+      "La educacion digital se expandio rapidamente en los ultimos anos, pero la calidad de acceso sigue siendo desigual entre regiones y grupos de ingresos. Aunque los dispositivos son ahora mas comunes, la conectividad fiable y los espacios tranquilos de estudio siguen siendo barreras importantes para muchos estudiantes. Los docentes tambien informan de que el alumnado con menor autorregulacion tiene mas dificultades en entornos asincronos. En el lado positivo, los sistemas de tutoria basados en datos pueden personalizar contenidos y ofrecer feedback oportuno si se usan con responsabilidad. El reto principal no es elegir entre metodos tradicionales y digitales, sino disenar modelos mixtos que mantengan la guia humana y aprovechen tecnologias adaptativas. Por ello, las politicas publicas deben combinar inversion en infraestructuras, formacion docente y marcos de evaluacion basados en evidencia.",
+    topicTags: ["academico", "sociedad", "tecnologia"],
+    competencyTags: ["comprension", "produccion", "escritura"],
+  },
+  {
+    id: "c1-research-1",
+    level: "C1",
+    duration: "long",
+    topic: "Essay: Interpreting research responsibly",
+    textEn:
+      "Public discussions increasingly rely on scientific claims, yet many participants interpret findings without considering methodological limits. A statistically significant result, for instance, does not automatically imply practical relevance in real-world settings. Likewise, causal language is often used in contexts where studies only establish correlation. Responsible interpretation requires attention to sample size, selection bias, and reproducibility, as well as transparent reporting of uncertainty. Journalists, educators, and policy advisors therefore share a responsibility: they must communicate evidence with precision while preserving accessibility for non-specialist audiences. If this balance is not achieved, decision-makers may adopt simplistic narratives that ignore complexity and produce ineffective interventions.",
+    textEs:
+      "Los debates publicos dependen cada vez mas de afirmaciones cientificas, pero muchas personas interpretan hallazgos sin considerar limites metodologicos. Un resultado estadisticamente significativo, por ejemplo, no implica automaticamente relevancia practica en contextos reales. Del mismo modo, a menudo se usa lenguaje causal cuando los estudios solo muestran correlacion. Una interpretacion responsable exige atender al tamano de muestra, al sesgo de seleccion y a la reproducibilidad, ademas de comunicar con transparencia los margenes de incertidumbre. Periodistas, docentes y asesores de politicas comparten por tanto una responsabilidad: comunicar la evidencia con precision y, a la vez, mantenerla accesible para audiencias no especialistas. Si no se logra ese equilibrio, quienes toman decisiones pueden adoptar narrativas simplistas que ignoran la complejidad y generan intervenciones ineficaces.",
+    topicTags: ["academico", "profesional", "sociedad"],
+    competencyTags: ["comprension", "produccion", "escritura"],
+  },
+  {
+    id: "c1-professional-1",
+    level: "C1",
+    duration: "medium",
+    topic: "Case note: Stakeholder negotiation",
+    textEn:
+      "During a multi-stakeholder project, tensions emerged when timelines were revised without prior consultation. Engineering teams prioritized technical feasibility, whereas commercial teams focused on market windows. The project lead reframed the dispute by separating non-negotiable constraints from adjustable deliverables and proposed a phased release. This reframing reduced defensive reactions and enabled a constructive compromise. The episode illustrates how communication quality can determine whether disagreement escalates into conflict or evolves into collaborative problem-solving.",
+    textEs:
+      "Durante un proyecto con multiples partes interesadas, surgieron tensiones cuando se revisaron plazos sin consulta previa. Los equipos de ingenieria priorizaban viabilidad tecnica, mientras que los equipos comerciales se centraban en ventanas de mercado. La persona responsable del proyecto replanteo la disputa separando restricciones no negociables de entregables ajustables y propuso un lanzamiento por fases. Este replanteamiento redujo reacciones defensivas y permitio un compromiso constructivo. El episodio muestra como la calidad comunicativa puede determinar si un desacuerdo escala a conflicto o evoluciona hacia resolucion colaborativa de problemas.",
+    topicTags: ["profesional", "trabajo"],
+    competencyTags: ["interaccion", "produccion", "escritura"],
+  },
+  {
+    id: "c2-ethics-1",
+    level: "C2",
+    duration: "long",
+    topic: "Critical text: Ethics of algorithmic decision-making",
+    textEn:
+      "The deployment of algorithmic decision systems in high-stakes domains has revived an old philosophical tension: whether procedural consistency can substitute for substantive justice. Proponents emphasize scalability and apparent neutrality, yet these claims become fragile when training data encode historical inequities. Even technically well-calibrated models may perpetuate harm if institutional incentives reward speed over accountability. A defensible governance framework must therefore combine rigorous auditability, contestability mechanisms for affected individuals, and independent oversight with real enforcement capacity. Absent these safeguards, organizations risk confusing operational efficiency with ethical legitimacy, thereby eroding public trust in the very systems intended to improve collective outcomes.",
+    textEs:
+      "La implantacion de sistemas algoritmicos de decision en ambitos de alto impacto ha reactivado una tension filosofica antigua: si la consistencia procedimental puede sustituir a la justicia sustantiva. Quienes los defienden destacan escalabilidad y aparente neutralidad, pero estas afirmaciones se debilitan cuando los datos de entrenamiento incorporan inequidades historicas. Incluso modelos tecnicamente bien calibrados pueden perpetuar dano si los incentivos institucionales premian velocidad por encima de rendicion de cuentas. Un marco de gobernanza defendible debe combinar auditabilidad rigurosa, mecanismos de impugnacion para las personas afectadas y supervision independiente con capacidad real de sancion. Sin esas garantias, las organizaciones corren el riesgo de confundir eficiencia operativa con legitimidad etica, erosionando la confianza publica en sistemas supuestamente disenados para mejorar resultados colectivos.",
+    topicTags: ["sociedad", "tecnologia", "academico"],
+    competencyTags: ["comprension", "produccion", "escritura"],
+  },
+  {
+    id: "c2-rhetoric-1",
+    level: "C2",
+    duration: "medium",
+    topic: "Advanced narrative: Rhetoric in public discourse",
+    textEn:
+      "Public rhetoric often persuades less through explicit argument than through strategic framing. By defining what counts as common sense, speakers can narrow the range of acceptable disagreement before any evidence is evaluated. Metaphors are especially potent in this process: they can illuminate complexity, but they can also smuggle assumptions that remain unexamined. Critical literacy at advanced levels therefore requires not only identifying claims and supporting evidence, but also interrogating the conceptual scaffolding that gives those claims intuitive force.",
+    textEs:
+      "La retorica publica persuade a menudo menos por argumentacion explicita que por encuadre estrategico. Al definir que se considera sentido comun, quienes hablan pueden reducir el rango de desacuerdo aceptable antes de evaluar evidencia alguna. Las metaforas son especialmente poderosas en este proceso: pueden iluminar complejidad, pero tambien introducir supuestos no examinados. La alfabetizacion critica en niveles avanzados exige, por tanto, no solo identificar afirmaciones y evidencias, sino tambien cuestionar la arquitectura conceptual que otorga fuerza intuitiva a esas afirmaciones.",
+    topicTags: ["cultura", "sociedad", "academico"],
+    competencyTags: ["comprension", "produccion", "escritura"],
+  },
 ];
 
 export function pickRandomReadingFragment(
   level: ReadingLevel,
-  duration?: ReadingLength
+  duration?: ReadingLength,
+  topicFilter?: TopicFilter,
+  competencyFocus?: CompetencyFocus
 ): ReadingFragment {
   const filtered = READING_FRAGMENTS.filter(
-    (f) => f.level === level && (!duration || f.duration === duration)
+    (f) =>
+      f.level === level &&
+      (!duration || f.duration === duration) &&
+      (!topicFilter ||
+        topicFilter === "general" ||
+        (f.topicTags?.includes(topicFilter) ?? false) ||
+        f.topic.toLowerCase().includes(topicFilter)) &&
+      (!competencyFocus ||
+        (f.competencyTags?.includes(competencyFocus) ?? true))
   );
-  const source = filtered.length > 0 ? filtered : READING_FRAGMENTS;
+  const source =
+    filtered.length > 0
+      ? filtered
+      : READING_FRAGMENTS.filter((f) => f.level === level);
   return source[Math.floor(Math.random() * source.length)];
 }

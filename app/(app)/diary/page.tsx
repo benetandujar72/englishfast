@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SessionFlowHeader } from "@/components/learning/SessionFlowHeader";
 import Link from "next/link";
 import type { DiaryFeedback } from "@/types";
 
@@ -34,7 +35,13 @@ export default function DiaryPage() {
 
   return (
     <div className="container mx-auto max-w-4xl space-y-6 p-4">
-      <h1 className="text-2xl font-bold">Writing Diary</h1>
+      <SessionFlowHeader
+        title="Writing diary"
+        subtitle="Write, get corrections, then reuse key improvements."
+        goalMinutes={15}
+        doneMinutes={feedback ? 15 : 0}
+        status={feedback ? "completed" : submitMutation.isPending ? "active" : "ready"}
+      />
 
       {!feedback ? (
         <>
@@ -51,7 +58,10 @@ export default function DiaryPage() {
                 const fb = entry.feedback as DiaryFeedback | null;
                 return (
                   <Link key={entry.id} href={`/diary/${entry.id}`}>
-                    <Card className="cursor-pointer transition-shadow hover:shadow-md">
+                    <Card
+                      variant="soft"
+                      className="cursor-pointer transition-shadow hover:shadow-md"
+                    >
                       <CardContent className="flex items-center justify-between py-3">
                         <div>
                           <p className="text-sm font-medium">

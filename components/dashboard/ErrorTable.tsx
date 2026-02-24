@@ -40,7 +40,7 @@ function getTypeColor(type: string) {
 
 export function ErrorTable({ errors }: ErrorTableProps) {
   return (
-    <Card>
+    <Card variant="soft">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Recurring Errors</CardTitle>
         <p className="text-xs text-muted-foreground">

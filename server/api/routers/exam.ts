@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { anthropic } from "@/server/ai/client";
 import { CLAUDE_EXAM_MODEL } from "@/server/ai/models";
+import { completePendingTaskForModule } from "@/server/api/learning-task-tracker";
 import {
   buildExamGenerationPrompt,
   buildExamGradingPrompt,
@@ -122,6 +123,11 @@ export const examRouter = createTRPCRouter({
           date: today,
           examScore: result.percentage ?? result.score,
         },
+      });
+
+      await completePendingTaskForModule(ctx.db, ctx.userId, "EXAM", {
+        completedMinutes: input.timeSpent ? Math.max(10, Math.ceil(input.timeSpent / 60)) : 15,
+        earnedXp: Math.max(20, Math.round((result.percentage ?? result.score ?? 60) / 2)),
       });
 
       return result;

@@ -153,6 +153,12 @@ export function ChatInterface() {
           <Badge variant="outline" className="text-xs">
             {mode}
           </Badge>
+          <Badge
+            variant={wordCount >= 120 ? "success" : wordCount >= 40 ? "info" : "secondary"}
+            className="text-xs"
+          >
+            {wordCount >= 120 ? "Session complete" : wordCount >= 40 ? "In progress" : "Warm-up"}
+          </Badge>
         </div>
       </div>
 
@@ -192,7 +198,7 @@ export function ChatInterface() {
 
       {/* Input area */}
       <div className="border-t p-4">
-        <Card className="flex items-end gap-2 p-2">
+        <Card variant="soft" className="flex items-end gap-2 p-2">
           <VoiceInput
             isListening={isListening}
             isSupported={voiceSupported}

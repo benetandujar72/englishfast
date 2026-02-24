@@ -9,8 +9,11 @@ export const runtime = "nodejs";
 
 const bodySchema = z.object({
   prompt: z.string().min(10),
-  targetLevel: z.enum(["A1", "A2", "B1"]).default("A1"),
+  targetLevel: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).default("A2"),
   subtitleLanguage: z.string().default("es"),
+  competencyFocus: z
+    .enum(["comprension", "interaccion", "produccion", "escritura"])
+    .optional(),
 });
 
 function fileToInlineData(file: File): Promise<GeminiInlineDataPart> {
@@ -42,8 +45,9 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const parsed = bodySchema.safeParse({
       prompt: formData.get("prompt"),
-      targetLevel: formData.get("targetLevel") ?? "A1",
+      targetLevel: formData.get("targetLevel") ?? "A2",
       subtitleLanguage: formData.get("subtitleLanguage") ?? "es",
+      competencyFocus: formData.get("competencyFocus") ?? undefined,
     });
 
     if (!parsed.success) {
@@ -64,6 +68,7 @@ export async function POST(req: Request) {
       prompt: parsed.data.prompt,
       targetLevel: parsed.data.targetLevel,
       subtitleLanguage: parsed.data.subtitleLanguage,
+      competencyFocus: parsed.data.competencyFocus,
       audioPart,
     });
     const evalMs = Date.now() - started;

@@ -4,6 +4,7 @@ import { diaryRouter } from "./routers/diary";
 import { examRouter } from "./routers/exam";
 import { progressRouter } from "./routers/progress";
 import { speakingRouter } from "./routers/speaking";
+import { schedulerRouter } from "./routers/scheduler";
 import { vocabularyRouter } from "./routers/vocabulary";
 
 export const appRouter = createTRPCRouter({
@@ -12,6 +13,7 @@ export const appRouter = createTRPCRouter({
   exam: examRouter,
   progress: progressRouter,
   speaking: speakingRouter,
+  scheduler: schedulerRouter,
   vocabulary: vocabularyRouter,
 });
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { recommendAdaptivePlan } from "@/server/ai/adaptive/speaking-adapter";
+import { completePendingTaskForModule } from "@/server/api/learning-task-tracker";
 
 const speakingModeSchema = z.enum([
   "PRONUNCIATION",
@@ -184,6 +185,11 @@ export const speakingRouter = createTRPCRouter({
           speakingSessions: 1,
           speakingAvgScore,
         },
+      });
+
+      await completePendingTaskForModule(ctx.db, ctx.userId, "SPEAKING", {
+        completedMinutes: input.durationSec ? Math.ceil(input.durationSec / 60) : 10,
+        earnedXp: Math.max(15, Math.round(input.scores.overall / 3)),
       });
 
       return attempt;

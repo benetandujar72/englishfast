@@ -360,6 +360,7 @@ interface ReadingAloudInput {
   prompt: string;
   targetLevel: string;
   subtitleLanguage: string;
+  competencyFocus?: string;
   audioPart: GeminiInlineDataPart;
 }
 
@@ -370,14 +371,16 @@ export async function analyzeReadingAloudWithGemini(
 You are an English reading-aloud coach for language learners.
 Target level: ${input.targetLevel}
 Subtitle language code: ${input.subtitleLanguage}
+Competency focus: ${input.competencyFocus ?? "comprension"}
 
 Task:
 1) Transcribe learner audio.
 2) Evaluate oral reading quality (pronunciation, fluency, clarity).
-3) Give concise feedback in English.
-4) Provide subtitle translation of the same feedback in the requested subtitle language.
-5) Provide pronunciation tips in English and translated subtitle language.
-6) Suggest one corrected/smoother version to read next in English and subtitle language.
+3) Prioritize feedback aligned with the competency focus.
+4) Give concise feedback in English.
+5) Provide subtitle translation of the same feedback in the requested subtitle language.
+6) Provide pronunciation tips in English and translated subtitle language.
+7) Suggest one corrected/smoother version to read next in English and subtitle language.
 
 Reference text the learner should read:
 ${input.prompt}

@@ -33,7 +33,7 @@ export function ProgressChart({
   }));
 
   return (
-    <Card>
+    <Card variant="soft">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">This Week</CardTitle>
         <div className="flex gap-4 text-sm text-muted-foreground">
@@ -58,7 +58,7 @@ export function ProgressChart({
             <Tooltip />
             <Bar
               dataKey="minutes"
-              fill="hsl(var(--primary))"
+              fill="hsl(var(--chart-2))"
               radius={[4, 4, 0, 0]}
               name="Minutes"
             />

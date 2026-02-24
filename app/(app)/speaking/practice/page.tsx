@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { AudioRecorder } from "@/components/speaking/AudioRecorder";
 import { SpeakingFeedbackPanel } from "@/components/speaking/SpeakingFeedbackPanel";
 import { AdaptiveHintCard } from "@/components/speaking/AdaptiveHintCard";
+import { SessionFlowHeader } from "@/components/learning/SessionFlowHeader";
 
 const defaultPromptByMode: Record<SpeakingMode, string> = {
   PRONUNCIATION: "Read this sentence clearly: I am improving my English every day.",
@@ -96,14 +97,15 @@ export default function SpeakingPracticePage() {
 
   return (
     <div className="container mx-auto max-w-4xl space-y-6 p-4">
-      <div>
-        <h1 className="text-2xl font-bold">Speaking practice</h1>
-        <p className="text-sm text-muted-foreground">
-          Record your answer, get AI feedback, and retry with adaptive coaching.
-        </p>
-      </div>
+      <SessionFlowHeader
+        title="Speaking practice"
+        subtitle="Record, analyze, then iterate with targeted coaching."
+        goalMinutes={15}
+        doneMinutes={feedback ? 15 : Math.max(0, Math.ceil((recorder.durationSec || 0) / 60))}
+        status={feedback ? "completed" : speaking.isAnalyzing ? "active" : "ready"}
+      />
 
-      <Card>
+      <Card variant="soft">
         <CardHeader>
           <CardTitle>Session setup</CardTitle>
         </CardHeader>
@@ -166,7 +168,7 @@ export default function SpeakingPracticePage() {
             />
           </label>
 
-          <div className="space-y-3 rounded-md border p-3">
+          <div className="space-y-3 rounded-xl border p-3">
             <AudioRecorder
               isRecording={recorder.isRecording}
               durationSec={recorder.durationSec}
@@ -191,7 +193,7 @@ export default function SpeakingPracticePage() {
 
       {feedback && (
         <div className="space-y-4">
-          <Card>
+          <Card variant="elevated">
             <CardHeader>
               <CardTitle>Edit transcript and reevaluate</CardTitle>
             </CardHeader>

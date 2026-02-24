@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { calculateSM2 } from "@/lib/spaced-repetition";
+import { completePendingTaskForModule } from "@/server/api/learning-task-tracker";
 
 export const vocabularyRouter = createTRPCRouter({
   getDueCards: protectedProcedure
@@ -45,7 +46,7 @@ export const vocabularyRouter = createTRPCRouter({
       const nextReview = new Date();
       nextReview.setDate(nextReview.getDate() + result.interval);
 
-      return ctx.db.vocabularyItem.update({
+      const updated = await ctx.db.vocabularyItem.update({
         where: { id: input.wordId },
         data: {
           easeFactor: result.easeFactor,
@@ -57,6 +58,15 @@ export const vocabularyRouter = createTRPCRouter({
           mastered: result.repetitions >= 5 && item.timesCorrect >= 4,
         },
       });
+
+      if (input.quality >= 3) {
+        await completePendingTaskForModule(ctx.db, ctx.userId, "VOCABULARY", {
+          completedMinutes: 6,
+          earnedXp: 14,
+        });
+      }
+
+      return updated;
     }),
 
   search: protectedProcedure

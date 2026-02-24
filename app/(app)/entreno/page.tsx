@@ -10,9 +10,15 @@ import { AudioRecorder } from "@/components/speaking/AudioRecorder";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useReadingTrainer, type ReadingAnalyzeResult } from "@/hooks/useReadingTrainer";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { SessionFlowHeader } from "@/components/learning/SessionFlowHeader";
 import {
+  CEFR_COMPETENCIES,
+  COMPETENCY_FILTER_OPTIONS,
   type ReadingLength,
+  type CompetencyFocus,
   type ReadingLevel,
+  TOPIC_FILTER_OPTIONS,
+  type TopicFilter,
   pickRandomReadingFragment,
 } from "@/lib/reading-training";
 
@@ -29,11 +35,14 @@ function ScoreRow({ label, value }: { label: string; value: number }) {
 }
 
 export default function EntrenoPage() {
-  const [level, setLevel] = useState<ReadingLevel>("A1");
+  const [level, setLevel] = useState<ReadingLevel>("A2");
   const [duration, setDuration] = useState<ReadingLength>("medium");
+  const [topicFilter, setTopicFilter] = useState<TopicFilter>("general");
+  const [competencyFocus, setCompetencyFocus] =
+    useState<CompetencyFocus>("comprension");
   const [subtitleLanguage, setSubtitleLanguage] = useState("es");
   const [fragment, setFragment] = useState(() =>
-    pickRandomReadingFragment("A1", "medium")
+    pickRandomReadingFragment("A2", "medium", "general", "comprension")
   );
   const [result, setResult] = useState<ReadingAnalyzeResult | null>(null);
   const [showSpanishText, setShowSpanishText] = useState(true);
@@ -78,7 +87,9 @@ export default function EntrenoPage() {
   const activeSentence = sentences[activeSentenceIndex] ?? "";
 
   const nextFragment = () => {
-    setFragment(pickRandomReadingFragment(level, duration));
+    setFragment(
+      pickRandomReadingFragment(level, duration, topicFilter, competencyFocus)
+    );
     setResult(null);
     setLiveSubtitle("");
     setLiveTranslateError(null);
@@ -148,25 +159,60 @@ export default function EntrenoPage() {
       prompt: fragment.textEn,
       targetLevel: level,
       subtitleLanguage,
+      competencyFocus,
     });
     setResult(feedback);
   };
 
   return (
     <div className="container mx-auto max-w-5xl space-y-6 p-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Entreno de lectura</h1>
-        <p className="text-sm text-muted-foreground">
-          Lee fragmentos en voz alta en ingles y recibe feedback rapido en ingles +
-          subtitulos en tu idioma (por defecto, castellano).
-        </p>
-      </div>
+      <SessionFlowHeader
+        title="Entreno de lectura"
+        subtitle="Lee en voz alta, recibe feedback y consolida comprension por competencias."
+        goalMinutes={12}
+        doneMinutes={result ? 12 : Math.max(0, Math.ceil((recorder.durationSec || 0) / 60))}
+        status={result ? "completed" : trainer.isAnalyzing ? "active" : "ready"}
+      />
 
-      <Card>
+      {"A2,B1,B2,C1,C2".includes(level) && (
+        <Card variant="soft">
+          <CardHeader>
+            <CardTitle>Competencias MCER {level}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">Comprension (oral + lectura)</p>
+              <p className="mt-1 text-muted-foreground">
+                {CEFR_COMPETENCIES[level as "A2" | "B1" | "B2" | "C1" | "C2"].comprension}
+              </p>
+            </div>
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">Hablar: interaccion</p>
+              <p className="mt-1 text-muted-foreground">
+                {CEFR_COMPETENCIES[level as "A2" | "B1" | "B2" | "C1" | "C2"].interaccion}
+              </p>
+            </div>
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">Hablar: produccion</p>
+              <p className="mt-1 text-muted-foreground">
+                {CEFR_COMPETENCIES[level as "A2" | "B1" | "B2" | "C1" | "C2"].produccion}
+              </p>
+            </div>
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">Escribir</p>
+              <p className="mt-1 text-muted-foreground">
+                {CEFR_COMPETENCIES[level as "A2" | "B1" | "B2" | "C1" | "C2"].escritura}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card variant="soft">
         <CardHeader>
           <CardTitle>Configuracion</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
+        <CardContent className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
           <label className="space-y-1 text-sm">
             <span>Nivel</span>
             <select
@@ -174,9 +220,11 @@ export default function EntrenoPage() {
               onChange={(e) => setLevel(e.target.value as ReadingLevel)}
               className="w-full rounded-md border bg-background px-3 py-2"
             >
-              <option value="A1">A1</option>
               <option value="A2">A2</option>
               <option value="B1">B1</option>
+              <option value="B2">B2</option>
+              <option value="C1">C1</option>
+              <option value="C2">C2</option>
             </select>
           </label>
 
@@ -207,6 +255,38 @@ export default function EntrenoPage() {
             </select>
           </label>
 
+          <label className="space-y-1 text-sm">
+            <span>Tema</span>
+            <select
+              value={topicFilter}
+              onChange={(e) => setTopicFilter(e.target.value as TopicFilter)}
+              className="w-full rounded-md border bg-background px-3 py-2"
+            >
+              {TOPIC_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="space-y-1 text-sm">
+            <span>Competencia foco</span>
+            <select
+              value={competencyFocus}
+              onChange={(e) =>
+                setCompetencyFocus(e.target.value as CompetencyFocus)
+              }
+              className="w-full rounded-md border bg-background px-3 py-2"
+            >
+              {COMPETENCY_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <div className="flex items-end">
             <Button onClick={nextFragment} variant="secondary" className="w-full">
               Nuevo fragmento
@@ -215,7 +295,7 @@ export default function EntrenoPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="soft">
         <CardHeader>
           <CardTitle>Fragmento para leer en voz alta</CardTitle>
         </CardHeader>
@@ -223,6 +303,7 @@ export default function EntrenoPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">Level {fragment.level}</Badge>
             <Badge variant="outline">Duration {fragment.duration}</Badge>
+            <Badge variant="outline">Focus {competencyFocus}</Badge>
             <Badge variant="outline">{fragment.topic}</Badge>
           </div>
           <div className="space-y-2 rounded-md border p-3">
@@ -259,7 +340,7 @@ export default function EntrenoPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="soft">
         <CardHeader>
           <CardTitle>Asistente en vivo</CardTitle>
         </CardHeader>
@@ -313,7 +394,7 @@ export default function EntrenoPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="soft">
         <CardHeader>
           <CardTitle>Grabacion y analisis</CardTitle>
         </CardHeader>
@@ -337,7 +418,7 @@ export default function EntrenoPage() {
       </Card>
 
       {result && (
-        <Card>
+        <Card variant="elevated">
           <CardHeader>
             <CardTitle>Feedback de lectura</CardTitle>
           </CardHeader>

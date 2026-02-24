@@ -6,6 +6,7 @@ import { CorrectionDiff } from "@/components/diary/CorrectionDiff";
 import { FeedbackPanel } from "@/components/diary/FeedbackPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { SessionFlowHeader } from "@/components/learning/SessionFlowHeader";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { DiaryFeedback } from "@/types";
@@ -41,6 +42,14 @@ export default function DiaryEntryPage() {
 
   return (
     <div className="container mx-auto max-w-4xl space-y-6 p-4">
+      <SessionFlowHeader
+        title="Writing diary review"
+        subtitle="Analyze corrections and lock in one improvement for your next entry."
+        goalMinutes={8}
+        doneMinutes={8}
+        status="completed"
+      />
+
       <Link href="/diary">
         <Button variant="ghost" size="sm">
           <ArrowLeft className="mr-2 h-4 w-4" />

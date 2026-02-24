@@ -23,10 +23,10 @@ interface StreakCalendarProps {
 
 function getIntensity(minutes: number): string {
   if (minutes === 0) return "bg-muted";
-  if (minutes < 30) return "bg-green-200 dark:bg-green-900";
-  if (minutes < 60) return "bg-green-400 dark:bg-green-700";
-  if (minutes < 120) return "bg-green-500 dark:bg-green-600";
-  return "bg-green-700 dark:bg-green-500";
+  if (minutes < 30) return "bg-cyan-200 dark:bg-cyan-900";
+  if (minutes < 60) return "bg-cyan-400 dark:bg-cyan-700";
+  if (minutes < 120) return "bg-sky-500 dark:bg-sky-600";
+  return "bg-sky-700 dark:bg-sky-500";
 }
 
 export function StreakCalendar({
@@ -53,13 +53,13 @@ export function StreakCalendar({
   }
 
   return (
-    <Card>
+    <Card variant="soft">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">Activity</CardTitle>
           <div className="flex items-center gap-3 text-sm">
             <div className="flex items-center gap-1">
-              <Flame className="h-4 w-4 text-orange-500" />
+              <Flame className="h-4 w-4 text-amber-500" />
               <span className="font-bold">{currentStreak}</span>
               <span className="text-muted-foreground">day streak</span>
             </div>
@@ -98,7 +98,7 @@ export function StreakCalendar({
         <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
           <span>Less</span>
           <div className="flex gap-1">
-            {["bg-muted", "bg-green-200 dark:bg-green-900", "bg-green-400 dark:bg-green-700", "bg-green-500 dark:bg-green-600", "bg-green-700 dark:bg-green-500"].map(
+            {["bg-muted", "bg-cyan-200 dark:bg-cyan-900", "bg-cyan-400 dark:bg-cyan-700", "bg-sky-500 dark:bg-sky-600", "bg-sky-700 dark:bg-sky-500"].map(
               (cls, i) => (
                 <div key={i} className={cn("h-3 w-3 rounded-sm", cls)} />
               )

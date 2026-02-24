@@ -28,7 +28,7 @@ export function LevelGauge({
   const target = getLevelProgress(targetLevel);
 
   return (
-    <Card>
+    <Card variant="soft">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Current Level</CardTitle>
       </CardHeader>
@@ -95,10 +95,10 @@ export function LevelGauge({
             <span
               className={
                 confidence === "high"
-                  ? "text-green-500"
+                  ? "text-emerald-500"
                   : confidence === "medium"
-                    ? "text-yellow-500"
-                    : "text-red-500"
+                    ? "text-amber-500"
+                    : "text-rose-500"
               }
             >
               {confidence}

@@ -9,6 +9,7 @@ import { VocabQuiz } from "@/components/vocabulary/VocabQuiz";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { SessionFlowHeader } from "@/components/learning/SessionFlowHeader";
 import { Search } from "lucide-react";
 
 export default function VocabularyPage() {
@@ -34,16 +35,27 @@ export default function VocabularyPage() {
 
   return (
     <div className="container mx-auto max-w-4xl space-y-6 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Vocabulary</h1>
-        {stats && (
-          <div className="flex gap-2">
-            <Badge variant="outline">{stats.total} total</Badge>
-            <Badge variant="secondary">{stats.dueToday} due today</Badge>
-            <Badge>{stats.mastered} mastered</Badge>
-          </div>
-        )}
-      </div>
+      <SessionFlowHeader
+        title="Vocabulary"
+        subtitle="Quick spaced-repetition sessions with immediate review feedback."
+        goalMinutes={10}
+        doneMinutes={currentCardIndex > 0 ? Math.min(10, currentCardIndex * 2) : 0}
+        status={
+          currentCardIndex > 0
+            ? "active"
+            : (stats?.dueToday ?? 0) === 0
+              ? "completed"
+              : "ready"
+        }
+      />
+
+      {stats && (
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline">{stats.total} total</Badge>
+          <Badge variant="secondary">{stats.dueToday} due today</Badge>
+          <Badge variant="success">{stats.mastered} mastered</Badge>
+        </div>
+      )}
 
       <Tabs defaultValue="review">
         <TabsList className="grid w-full grid-cols-3">
@@ -75,7 +87,7 @@ export default function VocabularyPage() {
               />
             </div>
           ) : (
-            <Card>
+            <Card variant="soft">
               <CardContent className="py-12 text-center">
                 <p className="text-lg font-medium">
                   {(dueCards?.length ?? 0) === 0 && currentCardIndex === 0
@@ -108,7 +120,7 @@ export default function VocabularyPage() {
               }}
             />
           ) : (
-            <Card>
+            <Card variant="soft">
               <CardContent className="py-12 text-center">
                 <p>You need at least 4 due words to start a quiz.</p>
               </CardContent>
@@ -130,7 +142,7 @@ export default function VocabularyPage() {
           {searchResults && searchResults.length > 0 && (
             <div className="space-y-2">
               {searchResults.map((word) => (
-                <Card key={word.id}>
+                <Card key={word.id} variant="soft">
                   <CardContent className="flex items-center justify-between py-3">
                     <div>
                       <p className="font-medium">{word.word}</p>
