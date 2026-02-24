@@ -18,6 +18,7 @@ interface GeminiTextPart {
 }
 
 type GeminiPart = GeminiTextPart | GeminiInlineDataPart;
+const SAFE_GEMINI_FALLBACKS = ["gemini-2.5-flash", "gemini-2.5-pro"] as const;
 
 interface GeminiEvaluationInput {
   mode: SpeakingMode;
@@ -109,7 +110,9 @@ async function callGemini({
   responseMimeType?: "application/json" | "text/plain";
 }) {
   const apiKey = getGoogleApiKey();
-  const modelsToTry = Array.from(new Set([model, ...GEMINI_FALLBACK_MODELS]));
+  const modelsToTry = Array.from(
+    new Set([model, ...GEMINI_FALLBACK_MODELS, ...SAFE_GEMINI_FALLBACKS])
+  );
   let lastError = "";
 
   for (const currentModel of modelsToTry) {
@@ -466,7 +469,7 @@ ${input.text}
 `;
 
   const payload = await callGemini({
-    model: GEMINI_SPEAKING_MODEL,
+    model: GEMINI_DEFAULT_MODEL,
     parts: [{ text: prompt }],
     responseMimeType: "application/json",
   });

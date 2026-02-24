@@ -11,16 +11,16 @@ export const CLAUDE_EXAM_MODEL =
   process.env.CLAUDE_EXAM_MODEL ?? CLAUDE_DEFAULT_MODEL;
 
 export const GEMINI_DEFAULT_MODEL =
-  process.env.GEMINI_DEFAULT_MODEL ?? "gemini-3.1-pro-preview";
+  process.env.GEMINI_DEFAULT_MODEL ?? "gemini-3-flash-preview";
 
 export const GEMINI_STT_MODEL =
   process.env.GEMINI_STT_MODEL ?? GEMINI_DEFAULT_MODEL;
 
 export const GEMINI_SPEAKING_MODEL =
-  process.env.GEMINI_SPEAKING_MODEL ?? "gemini-2.0-flash";
+  process.env.GEMINI_SPEAKING_MODEL ?? GEMINI_DEFAULT_MODEL;
 
 export const GEMINI_FALLBACK_MODELS = (
-  process.env.GEMINI_FALLBACK_MODELS ?? "gemini-2.0-flash"
+  process.env.GEMINI_FALLBACK_MODELS ?? "gemini-3-flash-preview,gemini-2.5-flash,gemini-2.5-pro"
 )
   .split(",")
   .map((m) => m.trim())

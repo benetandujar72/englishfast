@@ -74,7 +74,10 @@ export function useVoiceInput(options?: UseVoiceInputOptions) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onerror = (event: any) => {
-      console.error("Speech recognition error:", event.error);
+      // "aborted" is expected when stopping recognition manually.
+      if (event?.error !== "aborted") {
+        console.error("Speech recognition error:", event.error);
+      }
       setIsListening(false);
     };
 
